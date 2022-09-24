@@ -180,7 +180,6 @@ escSensorData_t *getEscSensorData(uint8_t motorNumber)
 
             combinedEscSensorData.voltage = combinedEscSensorData.voltage / getMotorCount();
             combinedEscSensorData.rpm = combinedEscSensorData.rpm / getMotorCount();
-
             combinedDataNeedsUpdate = false;
 
             DEBUG_SET(DEBUG_ESC_SENSOR, DEBUG_ESC_DATA_AGE, combinedEscSensorData.dataAge);

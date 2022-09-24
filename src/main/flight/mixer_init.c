@@ -50,7 +50,10 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .mixerMode = DEFAULT_MIXER,
     .yaw_motors_reversed = false,
     .crashflip_motor_percent = 0,
-    .crashflip_expo = 35,
+    .crashflip_expo = 0,
+    .govenor_p = 0,
+    .govenor_rpm_limit = 250,
+    .govenor_aggressiveness = 1,
     .mixer_type = MIXER_LEGACY,
 );
 

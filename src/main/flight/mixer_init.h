@@ -53,6 +53,7 @@ typedef struct mixerRuntime_s {
     float vbatFull;
     float vbatRangeToCompensate;
 #endif
+    float govenor_scaling;
 } mixerRuntime_t;
 
 extern mixerRuntime_t mixerRuntime;

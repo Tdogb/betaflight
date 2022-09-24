@@ -261,8 +261,24 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
         motorOutputRange = motorRangeMax - motorRangeMin;
         motorOutputMixSign = 1;
     }
-
-    throttle = constrainf(throttle / currentThrottleInputRange, 0.0f, 1.0f);
+    // #define USE_RPM_GOVENOR
+// #ifdef USE_RPM_GOVENOR
+    float RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0;
+    float maxRPM = 0;
+    float govenor_scaling_temp = 1;
+    if (motorConfig()->dev.useDshotTelemetry) {
+        maxRPM = 100*2*MAX(getDshotTelemetry(0),MAX(getDshotTelemetry(1),MAX(getDshotTelemetry(2),getDshotTelemetry(3))));
+        maxRPM = maxRPM / motorConfig()->motorPoleCount;
+    }
+    if (maxRPM > RPM_GOVENOR_LIMIT) {
+        govenor_scaling_temp = 1.0 - MIN(((float)(mixerConfig()->govenor_p) * (1.0/1000.0) *(maxRPM - RPM_GOVENOR_LIMIT) / RPM_GOVENOR_LIMIT),1.0);
+    }
+    mixerRuntime.govenor_scaling = round(((1000-mixerConfig()->govenor_aggressiveness)*mixerRuntime.govenor_scaling + mixerConfig()->govenor_aggressiveness*govenor_scaling_temp))/1000;
+    debug[0] = (int)(mixerRuntime.govenor_scaling * 100);
+    debug[1] = 279;
+// #endif
+    throttle = constrainf((throttle / currentThrottleInputRange)*mixerRuntime.govenor_scaling, 0.0f, 1.0f);
+    debug[2] = (int)(throttle*100);
 }
 
 #define CRASH_FLIP_DEADBAND 20
@@ -554,7 +570,6 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     float motorMix[MAX_SUPPORTED_MOTORS];
     float motorMixMax = 0, motorMixMin = 0;
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
-
         float mix =
             scaledAxisPidRoll  * activeMixer[i].roll +
             scaledAxisPidPitch * activeMixer[i].pitch +
