@@ -51,9 +51,18 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .yaw_motors_reversed = false,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 0,
-    .govenor_p = 0,
-    .govenor_rpm_limit = 250,
+    .govenor = false,
+    .govenor_p = 50,
+    .govenor_i = 50,
+    .govenor_d = 50,
+    .govenor_ff = 0,
+    // .govenor_rpm_limit = 250,
     .govenor_aggressiveness = 1,
+    .govenor_cell_count = 6,
+    .govenor_kv = 2070,
+    .govenor_debug_throttle = 2000,
+    .govenor_learning_rate = 10,
+    .govenor_learning_threshold_window = 0,
     .mixer_type = MIXER_LEGACY,
 );
 
@@ -313,6 +322,17 @@ void mixerInitProfile(void)
         mixerRuntime.motorOutputLow = DSHOT_MIN_THROTTLE; // Override value set by initEscEndpoints to allow zero motor drive
     }
 #endif
+mixerRuntime.govenorExpectedThrottleLimit = ((float)(mixerConfig()->govenor_debug_throttle)/1000.0f)*((float)(mixerConfig()->govenor_rpm_limit) * 100.0f)/((float)(mixerConfig()->govenor_cell_count) * 4.25f * (float)(mixerConfig()->govenor_kv)); //4.25 is the max voltage (doesn't matter too much), multiply by 1.2 so we make sure max throttle is above the govenor limit
+mixerRuntime.govenorExpectedThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit > 1.0f ? 1.0f : mixerRuntime.govenorExpectedThrottleLimit;
+mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
+mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.00001f * pidGetDT();
+mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.0000003f * pidGetPidFrequency();
+mixerRuntime.govenorI = 0;
+mixerRuntime.govenorPrevThrottle = 0;
+mixerRuntime.govenorFFGain = 0.05f * (float)(mixerConfig()->govenor_ff) * 0.001f;
+mixerRuntime.govenorAverageAverageRPM = 0;
+mixerRuntime.govenorAverageStickThrottle = 0;
+mixerRuntime.govenorIterationStep = 1.0f/(pidGetPidFrequency() * mixerConfig()->govenor_learning_threshold_window); // 3 is the averaging
 
 #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
     mixerRuntime.vbatSagCompensationFactor = 0.0f;
@@ -349,7 +369,7 @@ void loadLaunchControlMixer(void)
 static void mixerConfigureOutput(void)
 {
     mixerRuntime.motorCount = 0;
-
+    
     if (currentMixerMode == MIXER_CUSTOM || currentMixerMode == MIXER_CUSTOM_TRI || currentMixerMode == MIXER_CUSTOM_AIRPLANE) {
         // load custom mixer into currentMixer
         for (int i = 0; i < MAX_SUPPORTED_MOTORS; i++) {
@@ -413,6 +433,7 @@ void mixerInit(mixerMode_e mixerMode)
     mixerRuntime.feature3dEnabled = featureIsEnabled(FEATURE_3D);
 
     initEscEndpoints();
+
 #ifdef USE_SERVOS
     if (mixerIsTricopter()) {
         mixerTricopterInit();

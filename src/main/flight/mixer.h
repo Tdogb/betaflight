@@ -89,9 +89,18 @@ typedef struct mixerConfig_s {
     bool yaw_motors_reversed;
     uint8_t crashflip_motor_percent;
     uint8_t crashflip_expo;
+    bool govenor;
     uint16_t govenor_p;
+    uint16_t govenor_i;
+    uint16_t govenor_d;
+    uint16_t govenor_ff;
     uint8_t govenor_rpm_limit;
     uint16_t govenor_aggressiveness;
+    uint8_t govenor_cell_count;
+    uint16_t govenor_debug_throttle;
+    uint16_t govenor_kv;
+    uint16_t govenor_learning_rate;
+    uint16_t govenor_learning_threshold_window;
     uint8_t mixer_type;
 } mixerConfig_t;
 
