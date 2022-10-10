@@ -261,7 +261,6 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
         motorOutputRange = motorRangeMax - motorRangeMin;
         motorOutputMixSign = 1;
     }
-    //Govenor Code
     throttle = constrainf(throttle / currentThrottleInputRange, 0.0f, 1.0f);
 }
 
@@ -386,16 +385,16 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             float govenorFF = mixerRuntime.govenorFFGain * scaleRangef(MAX(0, RPM_GOVENOR_LIMIT - (averageRPM + expectedRPMIncrease))/mixerConfig()->govenor_kv, 0.0f, 3.8 * mixerConfig()->govenor_cell_count, 0.0f, 1.0f); // how much to decrease throttle by
 
             //This is the learning
-            mixerRuntime.govenorNormalizedIterations += mixerRuntime.govenorIterationStep;
-            mixerRuntime.govenorAverageStickThrottle += rcCommand[THROTTLE];
-            if (mixerRuntime.govenorNormalizedIterations > 1.0f && mixerRuntime.govenorAverageStickThrottle/(1.0f/mixerRuntime.govenorIterationStep) > 0.95f) {
-                mixerRuntime.govenorNormalizedIterations = 0.0f;
-                mixerRuntime.govenorAverageAverageRPM = mixerRuntime.govenorAverageAverageRPM/(1.0f/mixerRuntime.govenorIterationStep);
-                //if under then we need to raise cap
-                float newThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit + (RPM_GOVENOR_LIMIT-mixerRuntime.govenorAverageAverageRPM)/((float)(mixerConfig()->govenor_cell_count) * 4.25f * (float)(mixerConfig()->govenor_kv)); //((mixerRuntime.govenorAverageAverageRPM - RPM_GOVENOR_LIMIT) / mixerConfig()->govenor_kv) * 0.01f; //0.01 fudge factor
-                mixerRuntime.govenorExpectedThrottleLimit = (100.0f - (float)(mixerConfig()->govenor_learning_rate / 1000.0f))*mixerRuntime.govenorExpectedThrottleLimit + (float)(mixerConfig()->govenor_learning_rate / 1000.0f) * newThrottleLimit;
-            }
-            mixerRuntime.govenorPrevThrottle = throttle;
+            // mixerRuntime.govenorNormalizedIterations += mixerRuntime.govenorIterationStep;
+            // mixerRuntime.govenorAverageStickThrottle += rcCommand[THROTTLE];
+            // if (mixerRuntime.govenorNormalizedIterations > 1.0f && mixerRuntime.govenorAverageStickThrottle/(1.0f/mixerRuntime.govenorIterationStep) > 0.95f) {
+            //     mixerRuntime.govenorNormalizedIterations = 0.0f;
+            //     mixerRuntime.govenorAverageAverageRPM = mixerRuntime.govenorAverageAverageRPM/(1.0f/mixerRuntime.govenorIterationStep);
+            //     //if under then we need to raise cap
+            //     float newThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit + (RPM_GOVENOR_LIMIT-mixerRuntime.govenorAverageAverageRPM)/((float)(mixerConfig()->govenor_cell_count) * 4.25f * (float)(mixerConfig()->govenor_kv)); //((mixerRuntime.govenorAverageAverageRPM - RPM_GOVENOR_LIMIT) / mixerConfig()->govenor_kv) * 0.01f; //0.01 fudge factor
+            //     mixerRuntime.govenorExpectedThrottleLimit = (100.0f - (float)(mixerConfig()->govenor_learning_rate / 1000.0f))*mixerRuntime.govenorExpectedThrottleLimit + (float)(mixerConfig()->govenor_learning_rate / 1000.0f) * newThrottleLimit;
+            // }
+            // mixerRuntime.govenorPrevThrottle = throttle;
             rpmError = MAX(0.0f,rpmError);
             // PT1 type lowpass delay and smoothing for D
             averageRPM = 60.0f * (mixerRuntime.prevAverageRPM + (mixerRuntime.minRpsDelayK/60.0f) * (averageRPM - mixerRuntime.prevAverageRPM)); //kinda braindead to convert to rps then back
@@ -407,10 +406,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             mixerRuntime.govenorI = MAX(mixerRuntime.govenorI, 0.0f);
             float PIDOutput = MAX((govenorP + mixerRuntime.govenorI + govenorD + govenorFF), 0.0f); //more + when overspeed, should be subtracted from throttle
             throttle = constrainf(throttle - PIDOutput, 0.0f, 1.0f);
-            debug[0] = mixerRuntime.govenorExpectedThrottleLimit * 100;
-            debug[1] = 0;
+            // debug[0] = mixerRuntime.govenorExpectedThrottleLimit * 100;
+            debug[0] = averageRPM;
+            debug[1] = throttle * 100;
             debug[2] = 0;
-            debug[3] = averageRPM;
+            debug[3] = 0;
         }
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
         float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
