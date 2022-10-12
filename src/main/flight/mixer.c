@@ -268,9 +268,13 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 #define CRASH_FLIP_DEADBAND 20
 #define CRASH_FLIP_STICK_MINF 0.15f
 
-static void applyFlipOverAfterCrashModeToMotors(void)
+static bool applyFlipOverAfterCrashModeToMotors(void)
 {
     if (ARMING_FLAG(ARMED)) {
+        if (isUpright()) {
+            armingFlags = ARMING_DISABLED_ARM_SWITCH;
+            return false;
+        }
         const float flipPowerFactor = 1.0f - mixerConfig()->crashflip_expo / 100.0f;
         const float stickDeflectionPitchAbs = getRcDeflectionAbs(FD_PITCH);
         const float stickDeflectionRollAbs = getRcDeflectionAbs(FD_ROLL);
@@ -342,6 +346,7 @@ static void applyFlipOverAfterCrashModeToMotors(void)
             motor[i] = motor_disarmed[i];
         }
     }
+    return true;
 }
 
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
@@ -472,10 +477,17 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
 {
     // Find min and max throttle based on conditions. Throttle has to be known before mixing
     calculateThrottleAndCurrentMotorEndpoints(currentTimeUs);
-
+    /*
+    Only reset turtle mode state after a disarm? Or after switch is flicked forwards and backwards
+    */
+//    #if defined(USE_ACC)
+    // if (automatedFlipAfterCrash()) {
+    //     bool crash_flip_upright = applyFlipOverAfterCrashModeToMotors();
+    //     if (crash_flip_upright) {
+    //     } else {
+    //         return;
+    //     }
     if (isFlipOverAfterCrashActive()) {
-        applyFlipOverAfterCrashModeToMotors();
-
         return;
     }
 

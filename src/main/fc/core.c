@@ -317,11 +317,13 @@ void updateArmingStatus(void)
         }
 
         if (!isUpright() && !IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
-            setArmingDisabled(ARMING_DISABLED_ANGLE);
+            // setArmingDisabled(ARMING_DISABLED_ANGLE);
         } else {
             unsetArmingDisabled(ARMING_DISABLED_ANGLE);
         }
-
+        if (!isUpright()) {
+            armedWhileUpsideDown = true;
+        }
         if (getAverageSystemLoadPercent() > LOAD_PERCENTAGE_ONE) {
             setArmingDisabled(ARMING_DISABLED_LOAD);
         } else {
@@ -516,9 +518,9 @@ void tryArm(void)
         }
 #endif
 
-        if (isMotorProtocolDshot() && isModeActivationConditionPresent(BOXFLIPOVERAFTERCRASH)) {
+        if (isMotorProtocolDshot() && (isModeActivationConditionPresent(BOXFLIPOVERAFTERCRASH) || armedWhileUpsideDown)) {
             // Set motor spin direction
-            if (!(IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) || (tryingToArm == ARMING_DELAYED_CRASHFLIP))) {
+            if (!(IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) || (tryingToArm == ARMING_DELAYED_CRASHFLIP) || )) {
                 flipOverAfterCrashActive = false;
                 if (!featureIsEnabled(FEATURE_3D)) {
                     dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
