@@ -408,7 +408,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             throttle = constrainf(throttle - PIDOutput, 0.0f, 1.0f);
             // debug[0] = mixerRuntime.govenorExpectedThrottleLimit * 100;
             debug[0] = averageRPM;
-            debug[1] = throttle * 100;
+            debug[1] = 0;//throttle * 100;
             debug[2] = 0;
             debug[3] = 0;
         }
