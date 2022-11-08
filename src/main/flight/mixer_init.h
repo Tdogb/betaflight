@@ -67,6 +67,7 @@ typedef struct mixerRuntime_s {
     float govenorAverageAverageRPM;
     float govenorAverageStickThrottle;
     float govenorNormalizedIterations;
+    float govenorPreviousSmoothedRPM;
     float govenorIterationStep;
 } mixerRuntime_t;
 
