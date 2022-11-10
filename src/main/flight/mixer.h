@@ -103,6 +103,7 @@ typedef struct mixerConfig_s {
     uint16_t govenor_learning_threshold_window;
     bool rpm_linearization;
     uint8_t govenor_throttle_percentage_for_preactivation;
+    uint16_t govenorThrottleLimitLearningTimeMS;
     uint8_t mixer_type;
 } mixerConfig_t;
 
