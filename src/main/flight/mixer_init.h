@@ -71,6 +71,7 @@ typedef struct mixerRuntime_s {
     float govenorIterationStep;
     float govenorDelayK;
     float govenorLearningThrottleK;
+    bool govenor_init;
 } mixerRuntime_t;
 
 extern mixerRuntime_t mixerRuntime;

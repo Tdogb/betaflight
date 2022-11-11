@@ -66,6 +66,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .rpm_linearization = false,
     .govenor_throttle_percentage_for_preactivation = 100,
     .govenorThrottleLimitLearningTimeMS = 20,
+    .govenor_idle_rpm = 40,
     .mixer_type = MIXER_LEGACY,
 );
 
@@ -329,7 +330,7 @@ void mixerInitProfile(void)
 // mixerRuntime.govenorExpectedThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit > 1.0f ? 1.0f : mixerRuntime.govenorExpectedThrottleLimit;
 mixerRuntime.govenorExpectedThrottleLimit = 1.0f;
 mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
-mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.000001f * pidGetDT();
+mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.00001f * pidGetDT();
 mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.0000003f * pidGetPidFrequency();
 mixerRuntime.govenorI = 0;
 mixerRuntime.govenorPrevThrottle = 0;
@@ -340,6 +341,7 @@ mixerRuntime.govenorPreviousSmoothedRPMError = 0;
 // mixerRuntime.govenorIterationStep = 1.0f/(pidGetPidFrequency() * mixerConfig()->govenor_learning_threshold_window); // 3 is the averaging
 mixerRuntime.govenorDelayK = 800 * pidGetDT() / 20.0f;
 mixerRuntime.govenorLearningThrottleK = 0.5 / (pidGetPidFrequency() * mixerConfig()->govenorThrottleLimitLearningTimeMS / 1000); // 0.5 = value ^ (4000 * time)       0.99^(4000*(20/1000))
+mixerRuntime.govenor_init = false;
 
 #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
     mixerRuntime.vbatSagCompensationFactor = 0.0f;

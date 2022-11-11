@@ -369,6 +369,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
     //     debug[1] = averageRPM;
     //     debug[2] = (int)(throttle*100);
     // }
+        
         if (mixerConfig()->govenor && motorConfig()->dev.useDshotTelemetry) {
             float RPM_GOVENOR_LIMIT = 0;
             float averageRPM = 0;
@@ -376,12 +377,13 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             float PIDOutput = 0;
             throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
             if (mixerConfig()->rpm_linearization) {
-                RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0*throttle;
+                RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit - mixerConfig()->govenor_idle_rpm))*100.0f*((rcCommand[THROTTLE]-1000)/1000.0f) + mixerConfig()->govenor_idle_rpm * 100.0f;
             } else {
-                RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0;
+                RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
             }
             averageRPM = (getDshotTelemetry(0)+getDshotTelemetry(1)+getDshotTelemetry(2)+getDshotTelemetry(3))/4.0f;
             averageRPM = 100*averageRPM / (motorConfig()->motorPoleCount/2.0f);
+            // averageRPM = getAverageEscRpm();
             averageRPM_smoothed = mixerRuntime.govenorPreviousSmoothedRPM + mixerRuntime.govenorDelayK * (averageRPM - mixerRuntime.govenorPreviousSmoothedRPM); //kinda braindead to convert to rps then back
 
             float smoothedRPMError = averageRPM_smoothed - RPM_GOVENOR_LIMIT;
@@ -406,13 +408,17 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
                 }
                 PIDOutput = MAX(PIDOutput,0.0f);
             }
-            throttle = constrainf(throttle - PIDOutput, 0.0f, 1.0f);
+            if (mixerRuntime.govenor_init) {
+                throttle = constrainf(throttle - PIDOutput, 0.0f, 1.0f);
+            }
+            mixerRuntime.govenor_init = true;
 
             mixerRuntime.prevAverageRPM = averageRPM;
             mixerRuntime.govenorPreviousSmoothedRPM = averageRPM_smoothed;
             mixerRuntime.govenorPreviousSmoothedRPMError = smoothedRPMError;
-
-            DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
+            DEBUG_SET(DEBUG_RPM_LIMITER, 0, averageRPM_smoothed)
+            // DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
+            // DEBUG_SET(DEBUG_RPM_LIMITER, 1, rcCommand[THROTTLE]);
             DEBUG_SET(DEBUG_RPM_LIMITER, 1, mixerRuntime.govenorExpectedThrottleLimit * 100);
             DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*100);
             DEBUG_SET(DEBUG_RPM_LIMITER, 3, govenorD*100);
@@ -445,6 +451,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
     // Disarmed mode
     if (!ARMING_FLAG(ARMED)) {
         mixerRuntime.govenorI = 0;
+        mixerRuntime.govenor_init = false;
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
