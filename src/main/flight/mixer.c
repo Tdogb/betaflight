@@ -350,42 +350,57 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         float averageRPM = 0;
         float averageRPM_smoothed = 0;
         float PIDOutput = 0;
-        throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
         float rcCommandThrottle = (rcCommand[THROTTLE]-1000)/1000.0f;
         if (mixerConfig()->rpm_linearization) {
+            //throttle percent scales desired rpm between idle rpm and rpm limit
             RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit - mixerConfig()->govenor_idle_rpm))*100.0f*(rcCommandThrottle) + mixerConfig()->govenor_idle_rpm * 100.0f;
         } else {
+            throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
             RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
         }
+
+        //get the rpm averaged across the 4 motors
+        //TO-DO account for motor counts other than 4
         averageRPM = (getDshotTelemetry(0)+getDshotTelemetry(1)+getDshotTelemetry(2)+getDshotTelemetry(3))/4.0f;
         averageRPM = 100*averageRPM / (motorConfig()->motorPoleCount/2.0f);
-        averageRPM_smoothed = mixerRuntime.govenorPreviousSmoothedRPM + mixerRuntime.govenorDelayK * (averageRPM - mixerRuntime.govenorPreviousSmoothedRPM); //kinda braindead to convert to rps then back
 
+        //detect motor saturation
+        //TO-DO account for motor counts other than 4
+        bool motorsSaturated = false;
+        for (int i = 0; i < 4; i++) {
+            if (motor[i] >= motorConfig()->maxthrottle) {
+                motorsSaturated = true;
+            }
+        }
+
+        //get the smoothed rpm to avoid d term noise
+        averageRPM_smoothed = mixerRuntime.govenorPreviousSmoothedRPM + mixerRuntime.govenorDelayK * (averageRPM - mixerRuntime.govenorPreviousSmoothedRPM); //kinda braindead to convert to rps then back
         float smoothedRPMError = averageRPM_smoothed - RPM_GOVENOR_LIMIT;
         float govenorP = smoothedRPMError * mixerRuntime.govenorPGain; //+ when overspped
         float govenorD = (smoothedRPMError-mixerRuntime.govenorPreviousSmoothedRPMError) * mixerRuntime.govenorDGain; // + when quickly going overspeed
         if (mixerConfig()->rpm_linearization) {
-            if (rcCommandThrottle > motorConfig()->digitalIdleOffsetValue / 10000.0f) {
-                mixerRuntime.govenorI += smoothedRPMError * mixerRuntime.govenorIGain; // + when overspeed
+            //don't let I term wind up if throttle is below our motor idle throttle value
+            if (rcCommandThrottle < motorConfig()->digitalIdleOffsetValue / 10000.0f) {
+                mixerRuntime.govenorI *= 1.0f/(1.0f+(pidGetDT()*10.0f)); //slowly ramp down i term instead of resetting to avoid throttle pulsing cheats
             } else {
-                // mixerRuntime.govenorI *= 0.9996f;
-                 mixerRuntime.govenorI *= 1.0f/(1.0f+(pidGetDT()*4.0f));
+                //don't let I term wind up if motors are saturated. Otherwise, motors may stay at high throttle even after low throttle is commanded
+                if(!motorsSaturated)
+                {
+                    mixerRuntime.govenorI += smoothedRPMError * mixerRuntime.govenorIGain; // + when overspeed
+                }
+                
             }
+            //sum our pid terms
             PIDOutput = govenorP + mixerRuntime.govenorI + govenorD; //more + when overspeed, should be subtracted from throttle
         } else {
+            throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
             mixerRuntime.govenorI += smoothedRPMError * mixerRuntime.govenorIGain; // + when overspeed
             mixerRuntime.govenorI = MAX(mixerRuntime.govenorI, 0.0f);
             PIDOutput = govenorP + mixerRuntime.govenorI + govenorD; //more + when overspeed, should be subtracted from throttle
             if (PIDOutput > 0.05) {
                 mixerRuntime.govenorExpectedThrottleLimit = 0.9994 * mixerRuntime.govenorExpectedThrottleLimit;
             }
-            bool good = true;
-            for (int i = 0; i < 4; i++) {
-                if (motor[i] > 0.99f) {
-                    good = false;
-                }
-            }
-            if (PIDOutput < -0.05 && rcCommand[THROTTLE] > 1950 && good) {
+            if (PIDOutput < -0.05 && rcCommand[THROTTLE] > 1950 && !motorsSaturated) {
                 mixerRuntime.govenorExpectedThrottleLimit = (1+1-0.9994) * mixerRuntime.govenorExpectedThrottleLimit;
                 mixerRuntime.govenorExpectedThrottleLimit = MAX(mixerRuntime.govenorExpectedThrottleLimit, 1.0f);
             }
@@ -396,9 +411,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         }
         mixerRuntime.govenor_init = true;
 
+        //update previous values for next loop
         mixerRuntime.prevAverageRPM = averageRPM;
         mixerRuntime.govenorPreviousSmoothedRPM = averageRPM_smoothed;
         mixerRuntime.govenorPreviousSmoothedRPMError = smoothedRPMError;
+        
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, govenorP*100);
         DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*100);
