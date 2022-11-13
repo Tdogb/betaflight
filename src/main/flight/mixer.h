@@ -94,7 +94,7 @@ typedef struct mixerConfig_s {
     uint16_t govenor_i;
     uint16_t govenor_d;
     uint16_t govenor_ff;
-    uint8_t govenor_rpm_limit;
+    uint16_t govenor_rpm_limit;
     uint16_t govenor_aggressiveness;
     uint8_t govenor_cell_count;
     uint16_t govenor_debug_throttle;
