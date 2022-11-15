@@ -330,8 +330,8 @@ void mixerInitProfile(void)
 // mixerRuntime.govenorExpectedThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit > 1.0f ? 1.0f : mixerRuntime.govenorExpectedThrottleLimit;
 mixerRuntime.govenorExpectedThrottleLimit = 1.0f;
 mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
-mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.00001f * pidGetDT();
-mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.0000003f * pidGetPidFrequency();
+mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.0001f * pidGetDT();
+mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.00000003f * pidGetPidFrequency();
 mixerRuntime.govenorI = 0;
 mixerRuntime.govenorPrevThrottle = 0;
 // mixerRuntime.govenorFFGain = 0.05f * (float)(mixerConfig()->govenor_ff) * 0.001f;
