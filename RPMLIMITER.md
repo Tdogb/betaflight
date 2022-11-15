@@ -45,6 +45,6 @@ Note: RPM error can be viewed by enabling debug as an OSD element. The first val
 # Blackbox Setup
 You can view the RPM error, P term, I term and D term in the blackbox. Simply `set debug_mode = RPM_LIMITER` in the cli. Values are as follows in this order
 1. RPM error: Difference between desired RPM limit and smoothed average rpm. RPM limit is rpm_limiter_rpm_limit for linearization off and rpm_limiter_rpm_limit*throttle for linearization on. Positive means overspeed, negative means underspeed
-2. P term (positive means term is pulling the throttle down)
+2. RPM setpoint: The desired RPM, should be constant if linearization is off
 3. I term (positive means term is pulling the throttle down)
 4. D term (positive means term is pulling the throttle down)
