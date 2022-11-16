@@ -1,6 +1,8 @@
 # RPM Limiter
 ## Operation
 The RPM limiter uses a PID controller to activly limit the RPM to a maximum. The addition of the rpm linearization feature will allow for a smooth throttle feel right off the launch, and a consistent throttle feel throughout the pack. More details about rpm linearization are mentioned below.
+## After flashing
+IMPORTANT: After flashing, make sure you either paste a dump from before flashing, or copy your custom defaults from here (sometimes betaflight doesn't apply custom defaults when flashing a local hex) https://github.com/betaflight/unified-targets/tree/master/configs/default
 ## CLI Commands
 ### rpm_limiter
 Turns rpm limiter on and off 
