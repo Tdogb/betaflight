@@ -416,8 +416,8 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         mixerRuntime.govenorPreviousSmoothedRPM = averageRPM_smoothed;
         mixerRuntime.govenorPreviousSmoothedRPMError = smoothedRPMError;
         
-        DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 1, averageRPM);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 0, averageRPM);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 1, smoothedRPMError);
         DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*100);
         DEBUG_SET(DEBUG_RPM_LIMITER, 3, govenorD*100);
     }
