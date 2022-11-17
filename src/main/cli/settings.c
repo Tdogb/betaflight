@@ -948,6 +948,7 @@ const clivalue_t valueTable[] = {
     { "rpm_limiter_d",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_d) },
     // { "rpm_limiter_ff",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_ff) },
     { "rpm_limiter_rpm_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_rpm_limit) },
+    { "rpm_limiter_acceleration_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_acceleration_limit) },
     { "rpm_limiter_idle_rpm",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_idle_rpm) },
     // { "rpm_limiter_aggressiveness",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_aggressiveness) },
     // { "rpm_limiter_cell_count",    VAR_UINT8 |  MASTER_VALUE,  .config.minmaxUnsigned = { 1, 12 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_cell_count) },
