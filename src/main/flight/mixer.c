@@ -351,19 +351,16 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         float averageRPM_smoothed = 0;
         float PIDOutput = 0;
         float rcCommandThrottle = (rcCommand[THROTTLE]-1000)/1000.0f;
-        float acceleration = 0;
 
         if (mixerConfig()->rpm_linearization) {
             //scales rpm setpoint between idle rpm and rpm limit based on throttle percent
             RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit - mixerConfig()->govenor_idle_rpm))*100.0f*(rcCommandThrottle) + mixerConfig()->govenor_idle_rpm * 100.0f;
             
             //limit the speed with which the rpm setpoint can increase based on the rpm_limiter_acceleration_limit cli command
-            acceleration = ABS(mixerRuntime.govenorPreviousRPMLimit-RPM_GOVENOR_LIMIT);
-            acceleration = constrainf(acceleration, -1.0f * mixerRuntime.govenorAccelerationLimit, mixerRuntime.govenorAccelerationLimit);
-            if(RPM_GOVENOR_LIMIT>mixerRuntime.govenorPreviousRPMLimit) {
-                RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit+acceleration;
-            }else{
-                RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit-acceleration;
+            float acceleration = RPM_GOVENOR_LIMIT - mixerRuntime.govenorPreviousRPMLimit;
+            if(acceleration > 0) {
+                acceleration = MIN(acceleration, mixerRuntime.govenorAccelerationLimit);
+                RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit + acceleration;
             }
         } else {
             throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
