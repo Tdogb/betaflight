@@ -218,7 +218,7 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
         currentThrottleInputRange = PWM_RANGE;
 
 #ifdef USE_DYN_IDLE
-        if (mixerRuntime.dynIdleMinRps > 0.0f) {
+        if (!mixerConfig()->govenor && mixerRuntime.dynIdleMinRps > 0.0f) {
             const float maxIncrease = isAirmodeActivated() ? mixerRuntime.dynIdleMaxIncrease : 0.05f;
             float minRps = rpmMinMotorFrequency();
             DEBUG_SET(DEBUG_DYN_IDLE, 3, (minRps * 10));
@@ -243,7 +243,7 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
         float motorRangeAttenuationFactor = 0;
         // reduce motorRangeMax when battery is full
-        if (mixerRuntime.vbatSagCompensationFactor > 0.0f) {
+        if (!mixerConfig()->govenor && mixerRuntime.vbatSagCompensationFactor > 0.0f) {
             const uint16_t currentCellVoltage = getBatterySagCellVoltage();
             // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
             float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
@@ -439,11 +439,12 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
     }
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
         float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
-#ifdef USE_THRUST_LINEARIZATION
-        motorOutput = pidApplyThrustLinearization(motorOutput);
-#endif
-        motorOutput = motorOutputMin + motorOutputRange * motorOutput;
-
+        if (!mixerConfig()->govenor) {
+            #ifdef USE_THRUST_LINEARIZATION
+            motorOutput = pidApplyThrustLinearization(motorOutput);
+            #endif
+            motorOutput = motorOutputMin + motorOutputRange * motorOutput;
+        }
 #ifdef USE_SERVOS
         if (mixerIsTricopter()) {
             motorOutput += mixerTricopterMotorCorrection(i);

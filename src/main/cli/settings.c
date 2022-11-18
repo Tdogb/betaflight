@@ -946,20 +946,11 @@ const clivalue_t valueTable[] = {
     { "rpm_limiter_p",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_p) },
     { "rpm_limiter_i",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_i) },
     { "rpm_limiter_d",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_d) },
-    // { "rpm_limiter_ff",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_ff) },
     { "rpm_limiter_rpm_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_rpm_limit) },
     { "rpm_limiter_acceleration_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_acceleration_limit) },
     { "rpm_limiter_idle_rpm",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_idle_rpm) },
-    // { "rpm_limiter_aggressiveness",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_aggressiveness) },
-    // { "rpm_limiter_cell_count",    VAR_UINT8 |  MASTER_VALUE,  .config.minmaxUnsigned = { 1, 12 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_cell_count) },
-    // { "rpm_limiter_approximate_kv",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 1, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_kv) },
-    // { "rpm_limiter_debug_throttle",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 1, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_debug_throttle) },
     { "rpm_limiter_full_linearization",        VAR_INT8   | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, rpm_linearization) },
-    // { "rpm_limiter_throttle_percentage_for_preactivation",    VAR_UINT8 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 100 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_throttle_percentage_for_preactivation) },
-    // { "rpm_limiter_throttle_limit_learning_time_ms",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenorThrottleLimitLearningTimeMS) },
-
-// PG_MOTOR_3D_CONFIG
-    { "3d_deadband_low",            VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { PWM_PULSE_MIN, PWM_RANGE_MIDDLE }, PG_MOTOR_3D_CONFIG, offsetof(flight3DConfig_t, deadband3d_low) },
+    
     { "3d_deadband_high",           VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { PWM_RANGE_MIDDLE, PWM_PULSE_MAX }, PG_MOTOR_3D_CONFIG, offsetof(flight3DConfig_t, deadband3d_high) },
     { "3d_neutral",                 VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { PWM_PULSE_MIN, PWM_PULSE_MAX }, PG_MOTOR_3D_CONFIG, offsetof(flight3DConfig_t, neutral3d) },
     { "3d_deadband_throttle",       VAR_UINT16 | MASTER_VALUE, .config.minmaxUnsigned = { 1, 100 }, PG_MOTOR_3D_CONFIG, offsetof(flight3DConfig_t, deadband3d_throttle) },

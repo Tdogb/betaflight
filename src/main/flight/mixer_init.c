@@ -327,8 +327,6 @@ void mixerInitProfile(void)
         mixerRuntime.motorOutputLow = DSHOT_MIN_THROTTLE; // Override value set by initEscEndpoints to allow zero motor drive
     }
 #endif
-// mixerRuntime.govenorExpectedThrottleLimit = ((float)(mixerConfig()->govenor_debug_throttle)/1000.0f)*((float)(mixerConfig()->govenor_rpm_limit) * 100.0f)/((float)(mixerConfig()->govenor_cell_count) * 4.25f * (float)(mixerConfig()->govenor_kv)); //4.25 is the max voltage (doesn't matter too much), multiply by 1.2 so we make sure max throttle is above the govenor limit
-// mixerRuntime.govenorExpectedThrottleLimit = mixerRuntime.govenorExpectedThrottleLimit > 1.0f ? 1.0f : mixerRuntime.govenorExpectedThrottleLimit;
 mixerRuntime.govenorExpectedThrottleLimit = 1.0f;
 mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
 mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.0001f * pidGetDT();
