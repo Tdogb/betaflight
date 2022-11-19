@@ -378,6 +378,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         for (int i = 0; i < 4; i++) {
             if (motor[i] >= motorConfig()->maxthrottle) {
                 motorsSaturated = true;
+                break;
             }
         }
 
@@ -443,8 +444,8 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             #ifdef USE_THRUST_LINEARIZATION
             motorOutput = pidApplyThrustLinearization(motorOutput);
             #endif
-            motorOutput = motorOutputMin + motorOutputRange * motorOutput;
         }
+        motorOutput = motorOutputMin + motorOutputRange * motorOutput;
 #ifdef USE_SERVOS
         if (mixerIsTricopter()) {
             motorOutput += mixerTricopterMotorCorrection(i);
