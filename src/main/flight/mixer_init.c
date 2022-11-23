@@ -68,6 +68,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .govenorThrottleLimitLearningTimeMS = 20,
     .govenor_idle_rpm = 14,
     .govenor_acceleration_limit = 10,
+    .govenor_deceleration_limit = 10,
     .mixer_type = MIXER_LEGACY,
 );
 
@@ -332,6 +333,7 @@ mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
 mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.0001f * pidGetDT();
 mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.00000003f * pidGetPidFrequency();
 mixerRuntime.govenorAccelerationLimit = mixerConfig()->govenor_acceleration_limit * 10000.0f * pidGetDT();
+mixerRuntime.govenorDecelerationLimit = mixerConfig()->govenor_deceleration_limit * 10000.0f * pidGetDT();
 mixerRuntime.govenorI = 0;
 mixerRuntime.govenorPrevThrottle = 0;
 // mixerRuntime.govenorFFGain = 0.05f * (float)(mixerConfig()->govenor_ff) * 0.001f;

@@ -510,6 +510,7 @@ static bool     cmsx_rpm_limiter;
 static uint16_t cmsx_rpm_limit;
 static uint16_t cmsx_rpm_limiter_idle_rpm;
 static uint16_t cmsx_rpm_limiter_accel_limit;
+static uint16_t cmsx_rpm_limiter_decel_limit;
 #ifdef USE_D_MIN
 static uint8_t  cmsx_d_min[XYZ_AXIS_COUNT];
 static uint8_t  cmsx_d_min_gain;
@@ -557,6 +558,7 @@ static const void *cmsx_profileOtherOnEnter(displayPort_t *pDisp)
     cmsx_rpm_limiter = mixerConfig()->govenor;
     cmsx_rpm_limit = mixerConfig()->govenor_rpm_limit;
     cmsx_rpm_limiter_accel_limit = mixerConfig()->govenor_acceleration_limit;
+    cmsx_rpm_limiter_decel_limit = mixerConfig()->govenor_deceleration_limit;
     cmsx_rpm_limiter_idle_rpm = mixerConfig()->govenor_idle_rpm;
 
 #ifdef USE_D_MIN
@@ -613,6 +615,7 @@ static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry
     mixerConfigPtr->govenor_rpm_limit = cmsx_rpm_limit;
     mixerConfigPtr->govenor_idle_rpm = cmsx_rpm_limiter_idle_rpm;
     mixerConfigPtr->govenor_acceleration_limit = cmsx_rpm_limiter_accel_limit;
+    mixerConfigPtr->govenor_deceleration_limit = cmsx_rpm_limiter_decel_limit;
 
 #ifdef USE_D_MIN
     for (unsigned i = 0; i < XYZ_AXIS_COUNT; i++) {
@@ -649,6 +652,7 @@ static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "RPM LIMITER", OME_Bool,   NULL, &cmsx_rpm_limiter },
     { "RPM LIMIT",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limit, 0,  1000,  1} },
     { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  20,  1} },
+    { "RPM DECEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_decel_limit, 0,  20,  1} },
     { "RPM IDLE",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_idle_rpm, 0,  20,  1} },
     
 #ifdef USE_FEEDFORWARD

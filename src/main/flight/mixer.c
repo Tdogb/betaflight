@@ -362,6 +362,10 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
                 acceleration = MIN(acceleration, mixerRuntime.govenorAccelerationLimit);
                 RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit + acceleration;
             }
+            if(acceleration < 0) {
+                acceleration = MAX(acceleration, mixerRuntime.govenorDecelerationLimit);
+                RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit - acceleration;
+            }
         } else {
             throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
             RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
