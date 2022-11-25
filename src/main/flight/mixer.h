@@ -93,18 +93,10 @@ typedef struct mixerConfig_s {
     uint16_t govenor_p;
     uint16_t govenor_i;
     uint16_t govenor_d;
-    uint16_t govenor_ff;
     uint16_t govenor_rpm_limit;
     uint16_t govenor_acceleration_limit;
     uint16_t govenor_deceleration_limit;
-    uint16_t govenor_aggressiveness;
-    uint8_t govenor_cell_count;
-    uint16_t govenor_debug_throttle;
-    uint16_t govenor_kv;
-    uint16_t govenor_learning_rate;
-    uint16_t govenor_learning_threshold_window;
     bool rpm_linearization;
-    uint8_t govenor_throttle_percentage_for_preactivation;
     uint16_t govenorThrottleLimitLearningTimeMS;
     uint16_t govenor_idle_rpm;
     uint8_t mixer_type;

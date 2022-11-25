@@ -507,6 +507,7 @@ static uint16_t cmsx_itermThrottleThreshold;
 static uint8_t  cmsx_motorOutputLimit;
 static int8_t   cmsx_autoProfileCellCount;
 static bool     cmsx_rpm_limiter;
+static bool     cmsx_rpm_limiter_full_linear;
 static uint16_t cmsx_rpm_limit;
 static uint16_t cmsx_rpm_limiter_idle_rpm;
 static uint16_t cmsx_rpm_limiter_accel_limit;
@@ -559,6 +560,7 @@ static const void *cmsx_profileOtherOnEnter(displayPort_t *pDisp)
     cmsx_autoProfileCellCount = pidProfile->auto_profile_cell_count;
 
     cmsx_rpm_limiter = mixerConfig()->govenor;
+    cmsx_rpm_limiter_full_linear = mixerConfig()->rpm_linearization;
     cmsx_rpm_limit = mixerConfig()->govenor_rpm_limit;
     cmsx_rpm_limiter_accel_limit = mixerConfig()->govenor_acceleration_limit;
     cmsx_rpm_limiter_decel_limit = mixerConfig()->govenor_deceleration_limit;
@@ -618,6 +620,7 @@ static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry
 
     mixerConfig_t *mixerConfigPtr = mixerConfigMutable();
     mixerConfigPtr->govenor = cmsx_rpm_limiter;
+    mixerConfigPtr->rpm_linearization = cmsx_rpm_limiter_full_linear;
     mixerConfigPtr->govenor_rpm_limit = cmsx_rpm_limit;
     mixerConfigPtr->govenor_idle_rpm = cmsx_rpm_limiter_idle_rpm;
     mixerConfigPtr->govenor_acceleration_limit = cmsx_rpm_limiter_accel_limit;
@@ -659,13 +662,14 @@ static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry
 static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "-- OTHER PP --", OME_Label, NULL, pidProfileIndexString },
     { "RPM LIMITER", OME_Bool,   NULL, &cmsx_rpm_limiter },
+    { "RPM FULL LINEAR", OME_Bool,   NULL, &cmsx_rpm_limiter_full_linear },
     { "RPM LIMIT",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limit, 0,  1000,  1} },
-    { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  20,  1} },
-    { "RPM DECEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_decel_limit, 0,  20,  1} },
+    { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  1000,  1} },
+    { "RPM DECEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_decel_limit, 0,  1000,  1} },
     { "RPM IDLE",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_idle_rpm, 0,  20,  1} },
     { "RPM P",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_p, 0,  1000,  1} },
-    { "RPM I",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_i, 0,  10000,  1} },
-    { "RPM D",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_d, 0,  10,  1} },
+    { "RPM I",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_i, 0,  1000,  1} },
+    { "RPM D",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_d, 0,  1000,  1} },
     
 #ifdef USE_FEEDFORWARD
     { "FF TRANSITION", OME_FLOAT,  NULL, &(OSD_FLOAT_t)  { &cmsx_feedforward_transition,        0,    100,   1, 10 } },
