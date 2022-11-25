@@ -375,7 +375,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         //detect motor saturation
         //TO-DO account for motor counts other than 4
         bool motorsSaturated = false;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < getMotorCount(); i++) {
             if (motor[i] >= motorConfig()->maxthrottle) {
                 motorsSaturated = true;
                 break;

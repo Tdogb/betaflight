@@ -967,6 +967,15 @@ static void osdElementEscRpm(osdElementParms_t *element)
     renderOsdEscRpmOrFreq(&getEscRpm,element);
 }
 
+static void osdElementEscAvgRpm(osdElementParms_t *element)
+{
+    int avgRPM = 0;
+    for(int i = 0; i < getMotorCount(); i++){
+        avgRPM += getEscRpm(i)/getMotorCount();
+    }
+    tfp_sprintf(element->buff, "%d", avgRPM);
+}
+
 static void osdElementEscRpmFreq(osdElementParms_t *element)
 {
     renderOsdEscRpmOrFreq(&getEscRpmFreq,element);
@@ -1620,6 +1629,9 @@ const osdElementDrawFn osdElementDrawFunction[OSD_ITEM_COUNT] = {
 #if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
     [OSD_ESC_RPM]                 = osdElementEscRpm,
 #endif
+#if defined(USE_DSHOT_TELEMETRY) || defined(USE_ESC_SENSOR)
+    [OSD_ESC_AVG_RPM]             = osdElementEscAvgRpm,
+#endif
     [OSD_REMAINING_TIME_ESTIMATE] = osdElementRemainingTimeEstimate,
 #ifdef USE_RTC_TIME
     [OSD_RTC_DATETIME]            = osdElementRtcTime,
@@ -1739,6 +1751,7 @@ void osdAddActiveElements(void)
     if ((featureIsEnabled(FEATURE_ESC_SENSOR)) || (motorConfig()->dev.useDshotTelemetry)) {
         osdAddActiveElement(OSD_ESC_RPM);
         osdAddActiveElement(OSD_ESC_RPM_FREQ);
+        osdAddActiveElement(OSD_ESC_AVG_RPM);
     }
 #endif
 

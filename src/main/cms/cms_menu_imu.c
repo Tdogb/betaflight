@@ -510,6 +510,9 @@ static bool     cmsx_rpm_limiter;
 static uint16_t cmsx_rpm_limit;
 static uint16_t cmsx_rpm_limiter_idle_rpm;
 static uint16_t cmsx_rpm_limiter_accel_limit;
+static uint16_t cmsx_rpm_limiter_p;
+static uint16_t cmsx_rpm_limiter_i;
+static uint16_t cmsx_rpm_limiter_d;
 #ifdef USE_D_MIN
 static uint8_t  cmsx_d_min[XYZ_AXIS_COUNT];
 static uint8_t  cmsx_d_min_gain;
@@ -558,6 +561,9 @@ static const void *cmsx_profileOtherOnEnter(displayPort_t *pDisp)
     cmsx_rpm_limit = mixerConfig()->govenor_rpm_limit;
     cmsx_rpm_limiter_accel_limit = mixerConfig()->govenor_acceleration_limit;
     cmsx_rpm_limiter_idle_rpm = mixerConfig()->govenor_idle_rpm;
+    cmsx_rpm_limiter_p = mixerConfig()->govenor_p;
+    cmsx_rpm_limiter_i = mixerConfig()->govenor_i;
+    cmsx_rpm_limiter_d = mixerConfig()->govenor_d;
 
 #ifdef USE_D_MIN
     for (unsigned i = 0; i < XYZ_AXIS_COUNT; i++) {
@@ -613,6 +619,9 @@ static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry
     mixerConfigPtr->govenor_rpm_limit = cmsx_rpm_limit;
     mixerConfigPtr->govenor_idle_rpm = cmsx_rpm_limiter_idle_rpm;
     mixerConfigPtr->govenor_acceleration_limit = cmsx_rpm_limiter_accel_limit;
+    mixerConfigPtr->govenor_p = cmsx_rpm_limiter_p;
+    mixerConfigPtr->govenor_i = cmsx_rpm_limiter_i;
+    mixerConfigPtr->govenor_d = cmsx_rpm_limiter_d;
 
 #ifdef USE_D_MIN
     for (unsigned i = 0; i < XYZ_AXIS_COUNT; i++) {
@@ -650,6 +659,9 @@ static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "RPM LIMIT",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limit, 0,  1000,  1} },
     { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  20,  1} },
     { "RPM IDLE",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_idle_rpm, 0,  20,  1} },
+    { "RPM P",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_p, 0,  1000,  1} },
+    { "RPM I",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_i, 0,  10000,  1} },
+    { "RPM D",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_d, 0,  10,  1} },
     
 #ifdef USE_FEEDFORWARD
     { "FF TRANSITION", OME_FLOAT,  NULL, &(OSD_FLOAT_t)  { &cmsx_feedforward_transition,        0,    100,   1, 10 } },
