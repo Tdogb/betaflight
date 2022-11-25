@@ -439,8 +439,8 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, averageRPM);
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, smoothedRPMError);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*100);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 3, govenorD*100);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*1000.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 3, govenorD*1000.0f);
     }
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
         float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
