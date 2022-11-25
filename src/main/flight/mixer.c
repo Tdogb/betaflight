@@ -107,160 +107,160 @@ static FAST_DATA_ZERO_INIT int8_t motorOutputMixSign;
 
 static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 {
-    static uint16_t rcThrottlePrevious = 0;   // Store the last throttle direction for deadband transitions
-    static timeUs_t reversalTimeUs = 0; // time when motors last reversed in 3D mode
+    // static uint16_t rcThrottlePrevious = 0;   // Store the last throttle direction for deadband transitions
+    // // static timeUs_t reversalTimeUs = 0; // time when motors last reversed in 3D mode
     static float motorRangeMinIncrease = 0;
 
     float currentThrottleInputRange = 0;
-    if (mixerRuntime.feature3dEnabled) {
-        uint16_t rcCommand3dDeadBandLow;
-        uint16_t rcCommand3dDeadBandHigh;
+//     if (mixerRuntime.feature3dEnabled) {
+//         uint16_t rcCommand3dDeadBandLow;
+//         uint16_t rcCommand3dDeadBandHigh;
 
-        if (!ARMING_FLAG(ARMED)) {
-            rcThrottlePrevious = rxConfig()->midrc; // When disarmed set to mid_rc. It always results in positive direction after arming.
-        }
+//         if (!ARMING_FLAG(ARMED)) {
+//             rcThrottlePrevious = rxConfig()->midrc; // When disarmed set to mid_rc. It always results in positive direction after arming.
+//         }
 
-        if (IS_RC_MODE_ACTIVE(BOX3D) || flight3DConfig()->switched_mode3d) {
-            // The min_check range is halved because the output throttle is scaled to 500us.
-            // So by using half of min_check we maintain the same low-throttle deadband
-            // stick travel as normal non-3D mode.
-            const int mincheckOffset = (rxConfig()->mincheck - PWM_RANGE_MIN) / 2;
-            rcCommand3dDeadBandLow = rxConfig()->midrc - mincheckOffset;
-            rcCommand3dDeadBandHigh = rxConfig()->midrc + mincheckOffset;
-        } else {
-            rcCommand3dDeadBandLow = rxConfig()->midrc - flight3DConfig()->deadband3d_throttle;
-            rcCommand3dDeadBandHigh = rxConfig()->midrc + flight3DConfig()->deadband3d_throttle;
-        }
+//         if (IS_RC_MODE_ACTIVE(BOX3D) || flight3DConfig()->switched_mode3d) {
+//             // The min_check range is halved because the output throttle is scaled to 500us.
+//             // So by using half of min_check we maintain the same low-throttle deadband
+//             // stick travel as normal non-3D mode.
+//             const int mincheckOffset = (rxConfig()->mincheck - PWM_RANGE_MIN) / 2;
+//             rcCommand3dDeadBandLow = rxConfig()->midrc - mincheckOffset;
+//             rcCommand3dDeadBandHigh = rxConfig()->midrc + mincheckOffset;
+//         } else {
+//             rcCommand3dDeadBandLow = rxConfig()->midrc - flight3DConfig()->deadband3d_throttle;
+//             rcCommand3dDeadBandHigh = rxConfig()->midrc + flight3DConfig()->deadband3d_throttle;
+//         }
 
-        const float rcCommandThrottleRange3dLow = rcCommand3dDeadBandLow - PWM_RANGE_MIN;
-        const float rcCommandThrottleRange3dHigh = PWM_RANGE_MAX - rcCommand3dDeadBandHigh;
+//         const float rcCommandThrottleRange3dLow = rcCommand3dDeadBandLow - PWM_RANGE_MIN;
+//         const float rcCommandThrottleRange3dHigh = PWM_RANGE_MAX - rcCommand3dDeadBandHigh;
 
-        if (rcCommand[THROTTLE] <= rcCommand3dDeadBandLow || isFlipOverAfterCrashActive()) {
-            // INVERTED
-            motorRangeMin = mixerRuntime.motorOutputLow;
-            motorRangeMax = mixerRuntime.deadbandMotor3dLow;
-#ifdef USE_DSHOT
-            if (isMotorProtocolDshot()) {
-                motorOutputMin = mixerRuntime.motorOutputLow;
-                motorOutputRange = mixerRuntime.deadbandMotor3dLow - mixerRuntime.motorOutputLow;
-            } else
-#endif
-            {
-                motorOutputMin = mixerRuntime.deadbandMotor3dLow;
-                motorOutputRange = mixerRuntime.motorOutputLow - mixerRuntime.deadbandMotor3dLow;
-            }
+//         if (rcCommand[THROTTLE] <= rcCommand3dDeadBandLow || isFlipOverAfterCrashActive()) {
+//             // INVERTED
+//             motorRangeMin = mixerRuntime.motorOutputLow;
+//             motorRangeMax = mixerRuntime.deadbandMotor3dLow;
+// #ifdef USE_DSHOT
+//             if (isMotorProtocolDshot()) {
+//                 motorOutputMin = mixerRuntime.motorOutputLow;
+//                 motorOutputRange = mixerRuntime.deadbandMotor3dLow - mixerRuntime.motorOutputLow;
+//             } else
+// #endif
+//             {
+//                 motorOutputMin = mixerRuntime.deadbandMotor3dLow;
+//                 motorOutputRange = mixerRuntime.motorOutputLow - mixerRuntime.deadbandMotor3dLow;
+//             }
 
-            if (motorOutputMixSign != -1) {
-                reversalTimeUs = currentTimeUs;
-            }
-            motorOutputMixSign = -1;
+//             if (motorOutputMixSign != -1) {
+//                 reversalTimeUs = currentTimeUs;
+//             }
+//             motorOutputMixSign = -1;
 
-            rcThrottlePrevious = rcCommand[THROTTLE];
-            throttle = rcCommand3dDeadBandLow - rcCommand[THROTTLE];
-            currentThrottleInputRange = rcCommandThrottleRange3dLow;
-        } else if (rcCommand[THROTTLE] >= rcCommand3dDeadBandHigh) {
-            // NORMAL
-            motorRangeMin = mixerRuntime.deadbandMotor3dHigh;
-            motorRangeMax = mixerRuntime.motorOutputHigh;
-            motorOutputMin = mixerRuntime.deadbandMotor3dHigh;
-            motorOutputRange = mixerRuntime.motorOutputHigh - mixerRuntime.deadbandMotor3dHigh;
-            if (motorOutputMixSign != 1) {
-                reversalTimeUs = currentTimeUs;
-            }
-            motorOutputMixSign = 1;
-            rcThrottlePrevious = rcCommand[THROTTLE];
-            throttle = rcCommand[THROTTLE] - rcCommand3dDeadBandHigh;
-            currentThrottleInputRange = rcCommandThrottleRange3dHigh;
-        } else if ((rcThrottlePrevious <= rcCommand3dDeadBandLow &&
-                !flight3DConfigMutable()->switched_mode3d) ||
-                isMotorsReversed()) {
-            // INVERTED_TO_DEADBAND
-            motorRangeMin = mixerRuntime.motorOutputLow;
-            motorRangeMax = mixerRuntime.deadbandMotor3dLow;
+//             rcThrottlePrevious = rcCommand[THROTTLE];
+//             throttle = rcCommand3dDeadBandLow - rcCommand[THROTTLE];
+//             currentThrottleInputRange = rcCommandThrottleRange3dLow;
+//         } else if (rcCommand[THROTTLE] >= rcCommand3dDeadBandHigh) {
+//             // NORMAL
+//             motorRangeMin = mixerRuntime.deadbandMotor3dHigh;
+//             motorRangeMax = mixerRuntime.motorOutputHigh;
+//             motorOutputMin = mixerRuntime.deadbandMotor3dHigh;
+//             motorOutputRange = mixerRuntime.motorOutputHigh - mixerRuntime.deadbandMotor3dHigh;
+//             if (motorOutputMixSign != 1) {
+//                 reversalTimeUs = currentTimeUs;
+//             }
+//             motorOutputMixSign = 1;
+//             rcThrottlePrevious = rcCommand[THROTTLE];
+//             throttle = rcCommand[THROTTLE] - rcCommand3dDeadBandHigh;
+//             currentThrottleInputRange = rcCommandThrottleRange3dHigh;
+//         } else if ((rcThrottlePrevious <= rcCommand3dDeadBandLow &&
+//                 !flight3DConfigMutable()->switched_mode3d) ||
+//                 isMotorsReversed()) {
+//             // INVERTED_TO_DEADBAND
+//             motorRangeMin = mixerRuntime.motorOutputLow;
+//             motorRangeMax = mixerRuntime.deadbandMotor3dLow;
 
-#ifdef USE_DSHOT
-            if (isMotorProtocolDshot()) {
-                motorOutputMin = mixerRuntime.motorOutputLow;
-                motorOutputRange = mixerRuntime.deadbandMotor3dLow - mixerRuntime.motorOutputLow;
-            } else
-#endif
-            {
-                motorOutputMin = mixerRuntime.deadbandMotor3dLow;
-                motorOutputRange = mixerRuntime.motorOutputLow - mixerRuntime.deadbandMotor3dLow;
-            }
+// #ifdef USE_DSHOT
+//             if (isMotorProtocolDshot()) {
+//                 motorOutputMin = mixerRuntime.motorOutputLow;
+//                 motorOutputRange = mixerRuntime.deadbandMotor3dLow - mixerRuntime.motorOutputLow;
+//             } else
+// #endif
+//             {
+//                 motorOutputMin = mixerRuntime.deadbandMotor3dLow;
+//                 motorOutputRange = mixerRuntime.motorOutputLow - mixerRuntime.deadbandMotor3dLow;
+//             }
 
-            if (motorOutputMixSign != -1) {
-                reversalTimeUs = currentTimeUs;
-            }
-            motorOutputMixSign = -1;
+//             if (motorOutputMixSign != -1) {
+//                 reversalTimeUs = currentTimeUs;
+//             }
+//             motorOutputMixSign = -1;
 
-            throttle = 0;
-            currentThrottleInputRange = rcCommandThrottleRange3dLow;
-        } else {
-            // NORMAL_TO_DEADBAND
-            motorRangeMin = mixerRuntime.deadbandMotor3dHigh;
-            motorRangeMax = mixerRuntime.motorOutputHigh;
-            motorOutputMin = mixerRuntime.deadbandMotor3dHigh;
-            motorOutputRange = mixerRuntime.motorOutputHigh - mixerRuntime.deadbandMotor3dHigh;
-            if (motorOutputMixSign != 1) {
-                reversalTimeUs = currentTimeUs;
-            }
-            motorOutputMixSign = 1;
-            throttle = 0;
-            currentThrottleInputRange = rcCommandThrottleRange3dHigh;
-        }
-        if (currentTimeUs - reversalTimeUs < 250000) {
-            // keep iterm zero for 250ms after motor reversal
-            pidResetIterm();
-        }
-    } else {
+//             throttle = 0;
+//             currentThrottleInputRange = rcCommandThrottleRange3dLow;
+//         } else {
+//             // NORMAL_TO_DEADBAND
+//             motorRangeMin = mixerRuntime.deadbandMotor3dHigh;
+//             motorRangeMax = mixerRuntime.motorOutputHigh;
+//             motorOutputMin = mixerRuntime.deadbandMotor3dHigh;
+//             motorOutputRange = mixerRuntime.motorOutputHigh - mixerRuntime.deadbandMotor3dHigh;
+//             if (motorOutputMixSign != 1) {
+//                 reversalTimeUs = currentTimeUs;
+//             }
+//             motorOutputMixSign = 1;
+//             throttle = 0;
+//             currentThrottleInputRange = rcCommandThrottleRange3dHigh;
+//         }
+//         if (currentTimeUs - reversalTimeUs < 250000) {
+//             // keep iterm zero for 250ms after motor reversal
+//             pidResetIterm();
+//         }
+    // } else {
         throttle = rcCommand[THROTTLE] - PWM_RANGE_MIN + throttleAngleCorrection;
         currentThrottleInputRange = PWM_RANGE;
 
-#ifdef USE_DYN_IDLE
-        if (!mixerConfig()->govenor && mixerRuntime.dynIdleMinRps > 0.0f) {
-            const float maxIncrease = isAirmodeActivated() ? mixerRuntime.dynIdleMaxIncrease : 0.05f;
-            float minRps = rpmMinMotorFrequency();
-            DEBUG_SET(DEBUG_DYN_IDLE, 3, (minRps * 10));
-            float rpsError = mixerRuntime.dynIdleMinRps - minRps;
-            // PT1 type lowpass delay and smoothing for D
-            minRps = mixerRuntime.prevMinRps + mixerRuntime.minRpsDelayK * (minRps - mixerRuntime.prevMinRps);
-            float dynIdleD = (mixerRuntime.prevMinRps - minRps) * mixerRuntime.dynIdleDGain;
-            mixerRuntime.prevMinRps = minRps;
-            float dynIdleP = rpsError * mixerRuntime.dynIdlePGain;
-            rpsError = MAX(-0.1f, rpsError); //I rises fast, falls slowly
-            mixerRuntime.dynIdleI += rpsError * mixerRuntime.dynIdleIGain;
-            mixerRuntime.dynIdleI = constrainf(mixerRuntime.dynIdleI, 0.0f, maxIncrease);
-            motorRangeMinIncrease = constrainf((dynIdleP + mixerRuntime.dynIdleI + dynIdleD), 0.0f, maxIncrease);
-            DEBUG_SET(DEBUG_DYN_IDLE, 0, (MAX(-1000.0f, dynIdleP * 10000)));
-            DEBUG_SET(DEBUG_DYN_IDLE, 1, (mixerRuntime.dynIdleI * 10000));
-            DEBUG_SET(DEBUG_DYN_IDLE, 2, (dynIdleD * 10000));
-        } else {
-            motorRangeMinIncrease = 0;
-        }
-#endif
+// #ifdef USE_DYN_IDLE
+//         if (!mixerConfig()->govenor && mixerRuntime.dynIdleMinRps > 0.0f) {
+//             const float maxIncrease = isAirmodeActivated() ? mixerRuntime.dynIdleMaxIncrease : 0.05f;
+//             float minRps = rpmMinMotorFrequency();
+//             DEBUG_SET(DEBUG_DYN_IDLE, 3, (minRps * 10));
+//             float rpsError = mixerRuntime.dynIdleMinRps - minRps;
+//             // PT1 type lowpass delay and smoothing for D
+//             minRps = mixerRuntime.prevMinRps + mixerRuntime.minRpsDelayK * (minRps - mixerRuntime.prevMinRps);
+//             float dynIdleD = (mixerRuntime.prevMinRps - minRps) * mixerRuntime.dynIdleDGain;
+//             mixerRuntime.prevMinRps = minRps;
+//             float dynIdleP = rpsError * mixerRuntime.dynIdlePGain;
+//             rpsError = MAX(-0.1f, rpsError); //I rises fast, falls slowly
+//             mixerRuntime.dynIdleI += rpsError * mixerRuntime.dynIdleIGain;
+//             mixerRuntime.dynIdleI = constrainf(mixerRuntime.dynIdleI, 0.0f, maxIncrease);
+//             motorRangeMinIncrease = constrainf((dynIdleP + mixerRuntime.dynIdleI + dynIdleD), 0.0f, maxIncrease);
+//             DEBUG_SET(DEBUG_DYN_IDLE, 0, (MAX(-1000.0f, dynIdleP * 10000)));
+//             DEBUG_SET(DEBUG_DYN_IDLE, 1, (mixerRuntime.dynIdleI * 10000));
+//             DEBUG_SET(DEBUG_DYN_IDLE, 2, (dynIdleD * 10000));
+//         } else {
+//             motorRangeMinIncrease = 0;
+//         }
+// #endif
 
-#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
-        float motorRangeAttenuationFactor = 0;
-        // reduce motorRangeMax when battery is full
-        if (!mixerConfig()->govenor && mixerRuntime.vbatSagCompensationFactor > 0.0f) {
-            const uint16_t currentCellVoltage = getBatterySagCellVoltage();
-            // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
-            float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
-            motorRangeAttenuationFactor = (mixerRuntime.vbatRangeToCompensate / mixerRuntime.vbatFull) * batteryGoodness * mixerRuntime.vbatSagCompensationFactor;
-            DEBUG_SET(DEBUG_BATTERY, 2, batteryGoodness * 100);
-            DEBUG_SET(DEBUG_BATTERY, 3, motorRangeAttenuationFactor * 1000);
-        }
-        motorRangeMax = isFlipOverAfterCrashActive() ? mixerRuntime.motorOutputHigh : mixerRuntime.motorOutputHigh - motorRangeAttenuationFactor * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
-#else
+// #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+//         float motorRangeAttenuationFactor = 0;
+//         // reduce motorRangeMax when battery is full
+//         if (!mixerConfig()->govenor && mixerRuntime.vbatSagCompensationFactor > 0.0f) {
+//             const uint16_t currentCellVoltage = getBatterySagCellVoltage();
+//             // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
+//             float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
+//             motorRangeAttenuationFactor = (mixerRuntime.vbatRangeToCompensate / mixerRuntime.vbatFull) * batteryGoodness * mixerRuntime.vbatSagCompensationFactor;
+//             DEBUG_SET(DEBUG_BATTERY, 2, batteryGoodness * 100);
+//             DEBUG_SET(DEBUG_BATTERY, 3, motorRangeAttenuationFactor * 1000);
+//         }
+//         motorRangeMax = isFlipOverAfterCrashActive() ? mixerRuntime.motorOutputHigh : mixerRuntime.motorOutputHigh - motorRangeAttenuationFactor * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
+// #else
         motorRangeMax = mixerRuntime.motorOutputHigh;
-#endif
+// #endif
 
         motorRangeMin = mixerRuntime.motorOutputLow + motorRangeMinIncrease * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
         motorOutputMin = motorRangeMin;
         motorOutputRange = motorRangeMax - motorRangeMin;
         motorOutputMixSign = 1;
-    }
+    // }
     throttle = constrainf(throttle / currentThrottleInputRange, 0.0f, 1.0f);
 }
 
@@ -366,10 +366,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
                 acceleration = MAX(acceleration, mixerRuntime.govenorDecelerationLimit);
                 RPM_GOVENOR_LIMIT = mixerRuntime.govenorPreviousRPMLimit - acceleration;
             }
-        } else {
-            throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
-            RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
-        }
+        } 
+        // else {
+        //     throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
+        //     RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
+        // }
 
         //get the rpm averaged across the motors
         //TO-DO account for motor counts other than 4
@@ -406,22 +407,23 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             }
             //sum our pid terms
             PIDOutput = govenorP + mixerRuntime.govenorI + govenorD; //more + when overspeed, should be subtracted from throttle
-        } else {
-            throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
-            mixerRuntime.govenorI += smoothedRPMError * mixerRuntime.govenorIGain; // + when overspeed
-            mixerRuntime.govenorI = MAX(mixerRuntime.govenorI, 0.0f);
-            PIDOutput = govenorP + mixerRuntime.govenorI + govenorD; //more + when overspeed, should be subtracted from throttle
-            if (PIDOutput > 0.05) {
-                mixerRuntime.govenorExpectedThrottleLimit = 0.9994 * mixerRuntime.govenorExpectedThrottleLimit;
-            }
-            if (PIDOutput < -0.05 && rcCommand[THROTTLE] > 1950 && !motorsSaturated) {
-                mixerRuntime.govenorExpectedThrottleLimit = (1+1-0.9994) * mixerRuntime.govenorExpectedThrottleLimit;
-                mixerRuntime.govenorExpectedThrottleLimit = MAX(mixerRuntime.govenorExpectedThrottleLimit, 1.0f);
-            }
-
-            PIDOutput = MAX(PIDOutput,0.0f);
-            
         }
+        // } else {
+        //     throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
+        //     mixerRuntime.govenorI += smoothedRPMError * mixerRuntime.govenorIGain; // + when overspeed
+        //     mixerRuntime.govenorI = MAX(mixerRuntime.govenorI, 0.0f);
+        //     PIDOutput = govenorP + mixerRuntime.govenorI + govenorD; //more + when overspeed, should be subtracted from throttle
+        //     if (PIDOutput > 0.05) {
+        //         mixerRuntime.govenorExpectedThrottleLimit = 0.9994 * mixerRuntime.govenorExpectedThrottleLimit;
+        //     }
+        //     if (PIDOutput < -0.05 && rcCommand[THROTTLE] > 1950 && !motorsSaturated) {
+        //         mixerRuntime.govenorExpectedThrottleLimit = (1+1-0.9994) * mixerRuntime.govenorExpectedThrottleLimit;
+        //         mixerRuntime.govenorExpectedThrottleLimit = MAX(mixerRuntime.govenorExpectedThrottleLimit, 1.0f);
+        //     }
+
+        //     PIDOutput = MAX(PIDOutput,0.0f);
+            
+        // }
         if (mixerRuntime.govenor_init) {
             if (mixerConfig()->rpm_linearization) {
                 throttle = constrainf(-PIDOutput, 0.0f, 1.0f);
