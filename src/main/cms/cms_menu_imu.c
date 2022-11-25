@@ -510,13 +510,10 @@ static bool     cmsx_rpm_limiter;
 static uint16_t cmsx_rpm_limit;
 static uint16_t cmsx_rpm_limiter_idle_rpm;
 static uint16_t cmsx_rpm_limiter_accel_limit;
-<<<<<<< HEAD
 static uint16_t cmsx_rpm_limiter_p;
 static uint16_t cmsx_rpm_limiter_i;
 static uint16_t cmsx_rpm_limiter_d;
-=======
 static uint16_t cmsx_rpm_limiter_decel_limit;
->>>>>>> 40ce2d6526d9b869f80906f338b718fa83e301d5
 #ifdef USE_D_MIN
 static uint8_t  cmsx_d_min[XYZ_AXIS_COUNT];
 static uint8_t  cmsx_d_min_gain;
