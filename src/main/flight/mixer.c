@@ -217,44 +217,44 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
         throttle = rcCommand[THROTTLE] - PWM_RANGE_MIN + throttleAngleCorrection;
         currentThrottleInputRange = PWM_RANGE;
 
-// #ifdef USE_DYN_IDLE
-//         if (!mixerConfig()->govenor && mixerRuntime.dynIdleMinRps > 0.0f) {
-//             const float maxIncrease = isAirmodeActivated() ? mixerRuntime.dynIdleMaxIncrease : 0.05f;
-//             float minRps = rpmMinMotorFrequency();
-//             DEBUG_SET(DEBUG_DYN_IDLE, 3, (minRps * 10));
-//             float rpsError = mixerRuntime.dynIdleMinRps - minRps;
-//             // PT1 type lowpass delay and smoothing for D
-//             minRps = mixerRuntime.prevMinRps + mixerRuntime.minRpsDelayK * (minRps - mixerRuntime.prevMinRps);
-//             float dynIdleD = (mixerRuntime.prevMinRps - minRps) * mixerRuntime.dynIdleDGain;
-//             mixerRuntime.prevMinRps = minRps;
-//             float dynIdleP = rpsError * mixerRuntime.dynIdlePGain;
-//             rpsError = MAX(-0.1f, rpsError); //I rises fast, falls slowly
-//             mixerRuntime.dynIdleI += rpsError * mixerRuntime.dynIdleIGain;
-//             mixerRuntime.dynIdleI = constrainf(mixerRuntime.dynIdleI, 0.0f, maxIncrease);
-//             motorRangeMinIncrease = constrainf((dynIdleP + mixerRuntime.dynIdleI + dynIdleD), 0.0f, maxIncrease);
-//             DEBUG_SET(DEBUG_DYN_IDLE, 0, (MAX(-1000.0f, dynIdleP * 10000)));
-//             DEBUG_SET(DEBUG_DYN_IDLE, 1, (mixerRuntime.dynIdleI * 10000));
-//             DEBUG_SET(DEBUG_DYN_IDLE, 2, (dynIdleD * 10000));
-//         } else {
-//             motorRangeMinIncrease = 0;
-//         }
-// #endif
+#ifdef USE_DYN_IDLE
+        if (!mixerConfig()->govenor && mixerRuntime.dynIdleMinRps > 0.0f) {
+            const float maxIncrease = isAirmodeActivated() ? mixerRuntime.dynIdleMaxIncrease : 0.05f;
+            float minRps = rpmMinMotorFrequency();
+            DEBUG_SET(DEBUG_DYN_IDLE, 3, (minRps * 10));
+            float rpsError = mixerRuntime.dynIdleMinRps - minRps;
+            // PT1 type lowpass delay and smoothing for D
+            minRps = mixerRuntime.prevMinRps + mixerRuntime.minRpsDelayK * (minRps - mixerRuntime.prevMinRps);
+            float dynIdleD = (mixerRuntime.prevMinRps - minRps) * mixerRuntime.dynIdleDGain;
+            mixerRuntime.prevMinRps = minRps;
+            float dynIdleP = rpsError * mixerRuntime.dynIdlePGain;
+            rpsError = MAX(-0.1f, rpsError); //I rises fast, falls slowly
+            mixerRuntime.dynIdleI += rpsError * mixerRuntime.dynIdleIGain;
+            mixerRuntime.dynIdleI = constrainf(mixerRuntime.dynIdleI, 0.0f, maxIncrease);
+            motorRangeMinIncrease = constrainf((dynIdleP + mixerRuntime.dynIdleI + dynIdleD), 0.0f, maxIncrease);
+            DEBUG_SET(DEBUG_DYN_IDLE, 0, (MAX(-1000.0f, dynIdleP * 10000)));
+            DEBUG_SET(DEBUG_DYN_IDLE, 1, (mixerRuntime.dynIdleI * 10000));
+            DEBUG_SET(DEBUG_DYN_IDLE, 2, (dynIdleD * 10000));
+        } else {
+            motorRangeMinIncrease = 0;
+        }
+#endif
 
-// #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
-//         float motorRangeAttenuationFactor = 0;
-//         // reduce motorRangeMax when battery is full
-//         if (!mixerConfig()->govenor && mixerRuntime.vbatSagCompensationFactor > 0.0f) {
-//             const uint16_t currentCellVoltage = getBatterySagCellVoltage();
-//             // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
-//             float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
-//             motorRangeAttenuationFactor = (mixerRuntime.vbatRangeToCompensate / mixerRuntime.vbatFull) * batteryGoodness * mixerRuntime.vbatSagCompensationFactor;
-//             DEBUG_SET(DEBUG_BATTERY, 2, batteryGoodness * 100);
-//             DEBUG_SET(DEBUG_BATTERY, 3, motorRangeAttenuationFactor * 1000);
-//         }
-//         motorRangeMax = isFlipOverAfterCrashActive() ? mixerRuntime.motorOutputHigh : mixerRuntime.motorOutputHigh - motorRangeAttenuationFactor * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
-// #else
+#if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
+        float motorRangeAttenuationFactor = 0;
+        // reduce motorRangeMax when battery is full
+        if (!mixerConfig()->govenor && mixerRuntime.vbatSagCompensationFactor > 0.0f) {
+            const uint16_t currentCellVoltage = getBatterySagCellVoltage();
+            // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
+            float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
+            motorRangeAttenuationFactor = (mixerRuntime.vbatRangeToCompensate / mixerRuntime.vbatFull) * batteryGoodness * mixerRuntime.vbatSagCompensationFactor;
+            DEBUG_SET(DEBUG_BATTERY, 2, batteryGoodness * 100);
+            DEBUG_SET(DEBUG_BATTERY, 3, motorRangeAttenuationFactor * 1000);
+        }
+        motorRangeMax = isFlipOverAfterCrashActive() ? mixerRuntime.motorOutputHigh : mixerRuntime.motorOutputHigh - motorRangeAttenuationFactor * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
+#else
         motorRangeMax = mixerRuntime.motorOutputHigh;
-// #endif
+#endif
 
         motorRangeMin = mixerRuntime.motorOutputLow + motorRangeMinIncrease * (mixerRuntime.motorOutputHigh - mixerRuntime.motorOutputLow);
         motorOutputMin = motorRangeMin;
@@ -452,11 +452,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             #endif
         }
         motorOutput = motorOutputMin + motorOutputRange * motorOutput;
-#ifdef USE_SERVOS
-        if (mixerIsTricopter()) {
-            motorOutput += mixerTricopterMotorCorrection(i);
-        }
-#endif
+// #ifdef USE_SERVOS
+//         if (mixerIsTricopter()) {
+//             motorOutput += mixerTricopterMotorCorrection(i);
+//         }
+// #endif
         if (failsafeIsActive()) {
 #ifdef USE_DSHOT
             if (isMotorProtocolDshot()) {
