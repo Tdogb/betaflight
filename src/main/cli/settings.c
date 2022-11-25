@@ -948,6 +948,7 @@ const clivalue_t valueTable[] = {
     { "rpm_limiter_d",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_d) },
     { "rpm_limiter_rpm_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_rpm_limit) },
     { "rpm_limiter_acceleration_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_acceleration_limit) },
+    { "rpm_limiter_deceleration_limit",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 1000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_deceleration_limit) },
     { "rpm_limiter_idle_rpm",    VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 999 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, govenor_idle_rpm) },
     { "rpm_limiter_full_linearization",        VAR_INT8   | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, rpm_linearization) },
     
