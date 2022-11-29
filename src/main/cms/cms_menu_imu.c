@@ -661,15 +661,15 @@ static const void *cmsx_profileOtherOnExit(displayPort_t *pDisp, const OSD_Entry
 
 static const OSD_Entry cmsx_menuProfileOtherEntries[] = {
     { "-- OTHER PP --", OME_Label, NULL, pidProfileIndexString },
-    { "RPM LIMITER", OME_Bool,   NULL, &cmsx_rpm_limiter },
-    { "RPM FULL LINEAR", OME_Bool,   NULL, &cmsx_rpm_limiter_full_linear },
-    { "RPM LIMIT",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limit, 0,  1000,  1} },
-    { "RPM P",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_p, 0,  1000,  1} },
-    { "RPM I",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_i, 0,  1000,  1} },
-    { "RPM D",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_d, 0,  1000,  1} },
-    { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  1000,  1} },
-    { "RPM DECEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_decel_limit, 0,  1000,  1} },
-    { "RPM IDLE",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_idle_rpm, 0,  60,  1} },
+    // { "RPM LIMITER", OME_Bool,   NULL, &cmsx_rpm_limiter },
+    // { "RPM FULL LINEAR", OME_Bool,   NULL, &cmsx_rpm_limiter_full_linear },
+    // { "RPM LIMIT",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limit, 0,  1000,  1} },
+    // { "RPM P",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_p, 0,  1000,  1} },
+    // { "RPM I",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_i, 0,  1000,  1} },
+    // { "RPM D",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_d, 0,  1000,  1} },
+    // { "RPM ACCEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_accel_limit, 0,  1000,  1} },
+    // { "RPM DECEL LIM",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_decel_limit, 0,  1000,  1} },
+    // { "RPM IDLE",   OME_UINT16, NULL, &(OSD_UINT16_t) { &cmsx_rpm_limiter_idle_rpm, 0,  60,  1} },
     
 #ifdef USE_FEEDFORWARD
     { "FF TRANSITION", OME_FLOAT,  NULL, &(OSD_FLOAT_t)  { &cmsx_feedforward_transition,        0,    100,   1, 10 } },
