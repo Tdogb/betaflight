@@ -343,7 +343,7 @@ static void applyFlipOverAfterCrashModeToMotors(void)
     }
 }
 
-static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
+static void applyRPMLimiter(void)
 {
     if (mixerConfig()->govenor && motorConfig()->dev.useDshotTelemetry) {
         float RPM_GOVENOR_LIMIT = 0;
@@ -373,19 +373,14 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         }
 
         //get the rpm averaged across the motors
-        //TO-DO account for motor counts other than 4
-        averageRPM = (getDshotTelemetry(0)+getDshotTelemetry(1)+getDshotTelemetry(2)+getDshotTelemetry(3))/4.0f;
-        averageRPM = 100*averageRPM / (motorConfig()->motorPoleCount/2.0f);
-
-        //detect motor saturation
-        //TO-DO account for motor counts other than 4
         bool motorsSaturated = false;
         for (int i = 0; i < getMotorCount(); i++) {
+            averageRPM += getDshotTelemetry(i);
             if (motor[i] >= motorConfig()->maxthrottle) {
                 motorsSaturated = true;
-                break;
             }
         }
+        averageRPM = 100 * averageRPM / (getMotorCount()*motorConfig()->motorPoleCount/2.0f);
 
         //get the smoothed rpm to avoid d term noise
         averageRPM_smoothed = mixerRuntime.govenorPreviousSmoothedRPM + mixerRuntime.govenorDelayK * (averageRPM - mixerRuntime.govenorPreviousSmoothedRPM); //kinda braindead to convert to rps then back
@@ -444,6 +439,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
         DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.govenorI*100.0f);
         DEBUG_SET(DEBUG_RPM_LIMITER, 3, govenorD*100.0f);
     }
+}
+
+static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
+{
+    applyRPMLimiter();
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
         float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
         if (!mixerConfig()->govenor) {
@@ -452,11 +452,11 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
             #endif
         }
         motorOutput = motorOutputMin + motorOutputRange * motorOutput;
-// #ifdef USE_SERVOS
-//         if (mixerIsTricopter()) {
-//             motorOutput += mixerTricopterMotorCorrection(i);
-//         }
-// #endif
+#ifdef USE_SERVOS
+        if (mixerIsTricopter()) {
+            motorOutput += mixerTricopterMotorCorrection(i);
+        }
+#endif
         if (failsafeIsActive()) {
 #ifdef USE_DSHOT
             if (isMotorProtocolDshot()) {
