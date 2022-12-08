@@ -51,14 +51,15 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .yaw_motors_reversed = false,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 0,
-    .govenor = false,
+    .govenor = true,
     .govenor_p = 20,
     .govenor_i = 15,
-    .govenor_d = 17,
+    .govenor_d = 10,
     .rpm_linearization = true,
     .govenor_idle_rpm = 17,
-    .govenor_acceleration_limit = 15,
-    .govenor_deceleration_limit = 15,
+    .govenor_acceleration_limit = 60,
+    .govenor_deceleration_limit = 60,
+    .govenor_rpm_limit = 130,
     .mixer_type = MIXER_LEGACY,
 );
 
@@ -322,8 +323,8 @@ mixerRuntime.govenorExpectedThrottleLimit = 1.0f;
 mixerRuntime.govenorPGain = mixerConfig()->govenor_p * 0.0000015f;
 mixerRuntime.govenorIGain = mixerConfig()->govenor_i * 0.0001f * pidGetDT();
 mixerRuntime.govenorDGain = mixerConfig()->govenor_d * 0.00000003f * pidGetPidFrequency();
-mixerRuntime.govenorAccelerationLimit = mixerConfig()->govenor_acceleration_limit * 10000.0f * pidGetDT();
-mixerRuntime.govenorDecelerationLimit = mixerConfig()->govenor_deceleration_limit * 10000.0f * pidGetDT();
+mixerRuntime.govenorAccelerationLimit = mixerConfig()->govenor_acceleration_limit * 1000.0f * pidGetDT();
+mixerRuntime.govenorDecelerationLimit = mixerConfig()->govenor_deceleration_limit * 1000.0f * pidGetDT();
 mixerRuntime.govenorI = 0;
 // mixerRuntime.govenorPrevThrottle = 0;
 // mixerRuntime.govenorFFGain = 0.05f * (float)(mixerConfig()->govenor_ff) * 0.001f;
