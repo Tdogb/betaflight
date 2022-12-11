@@ -51,6 +51,15 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .yaw_motors_reversed = false,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 35,
+    .rpm_limiter = false,
+    .rpm_limiter_p = 20,
+    .rpm_limiter_i = 15,
+    .rpm_limiter_d = 10,
+    .rpm_limiter_rpm_linearization = true,
+    .rpm_limiter_idle_rpm = 17,
+    .rpm_limiter_acceleration_limit = 60,
+    .rpm_limiter_deceleration_limit = 60,
+    .rpm_limiter_rpm_limit = 130,
     .mixer_type = MIXER_LEGACY,
 );
 
@@ -306,6 +315,7 @@ void mixerInitProfile(void)
     mixerRuntime.dynIdleDGain = currentPidProfile->dyn_idle_d_gain * 0.0000003f * pidGetPidFrequency();
     mixerRuntime.dynIdleMaxIncrease = currentPidProfile->dyn_idle_max_increase * 0.001f;
     mixerRuntime.minRpsDelayK = 800 * pidGetDT() / 20.0f; //approx 20ms D delay, arbitrarily suits many motors
+    mixerRuntime.rpm_limiterLearningThrottleK = 0.5 / (pidGetPidFrequency() * mixerConfig()->rpm_limiterThrottleLimitLearningTimeMS / 1000);
     if (!mixerRuntime.feature3dEnabled && mixerRuntime.dynIdleMinRps) {
         mixerRuntime.motorOutputLow = DSHOT_MIN_THROTTLE; // Override value set by initEscEndpoints to allow zero motor drive
     }
@@ -321,6 +331,19 @@ void mixerInitProfile(void)
             mixerRuntime.vbatSagCompensationFactor = ((float)currentPidProfile->vbat_sag_compensation) / 100.0f;
         }
     }
+#endif
+#if defined(USE_RPM_LIMITER)
+    mixerRuntime.rpm_limiterExpectedThrottleLimit = 1.0f;
+    mixerRuntime.rpm_limiterPGain = mixerConfig()->rpm_limiter_p * 0.0000015f;
+    mixerRuntime.rpm_limiterIGain = mixerConfig()->rpm_limiter_i * 0.0001f * pidGetDT();
+    mixerRuntime.rpm_limiterDGain = mixerConfig()->rpm_limiter_d * 0.00000003f * pidGetPidFrequency();
+    mixerRuntime.rpm_limiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * 1000.0f * pidGetDT();
+    mixerRuntime.rpm_limiterDecelerationLimit = mixerConfig()->rpm_limiter_deceleration_limit * 1000.0f * pidGetDT();
+    mixerRuntime.rpm_limiterI = 0;
+    mixerRuntime.rpm_limiterPreviousSmoothedRPMError = 0;
+    mixerRuntime.rpm_limiterDelayK = 800 * pidGetDT() / 20.0f;
+    mixerRuntime.rpm_limiterLearningThrottleK = 0.5 / (pidGetPidFrequency() * mixerConfig()->rpm_limiterThrottleLimitLearningTimeMS / 1000); // 0.5 = value ^ (4000 * time)       0.99^(4000*(20/1000))
+    mixerRuntime.rpm_limiter_init = false;
 #endif
 }
 
