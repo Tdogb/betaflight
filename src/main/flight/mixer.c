@@ -349,16 +349,21 @@ static void applyRPMLimiter(void)
 {
     if (mixerConfig()->rpm_limiter && motorConfig()->dev.useDshotTelemetry) {
         float scaledRPMLimit = 0;
+        float PIDOutput = 0;
+        float rcCommandThrottle = (rcCommand[THROTTLE] - 1000) / 1000.0f;
         float averageRPM = 0;
         float averageRPM_smoothed = 0;
-        float PIDOutput = 0;
-        float rcCommandThrottle = (rcCommand[THROTTLE]-1000)/1000.0f;
-
+        bool motorsSaturated = false;
+        for (int i = 0; i < getMotorCount(); i++) {
+            averageRPM += getDshotTelemetry(i);
+            if (motor[i] >= motorConfig()->maxthrottle) {
+                motorsSaturated = true;
+            }
+        }
+        averageRPM = 100 * averageRPM / (getMotorCount() * motorConfig()->motorPoleCount / 2.0f);
+        averageRPM_smoothed = mixerRuntime.rpm_limiterPreviousSmoothedRPM + mixerRuntime.rpm_limiterDelayK * (averageRPM - mixerRuntime.rpm_limiterPreviousSmoothedRPM); //kinda braindead to convert to rps then back
         if (mixerConfig()->rpm_limiter_rpm_linearization) {
-            //scales rpm setpoint between idle rpm and rpm limit based on throttle percent
-            scaledRPMLimit = ((mixerConfig()->rpm_limiter_rpm_limit - mixerConfig()->rpm_limiter_idle_rpm))*100.0f*(rcCommandThrottle) + mixerConfig()->rpm_limiter_idle_rpm * 100.0f;
-
-            //limit the speed with which the rpm setpoint can increase based on the rpm_limiter_acceleration_limit cli command
+            scaledRPMLimit = ((mixerConfig()->rpm_limiter_rpm_limit - mixerConfig()->rpm_limiter_idle_rpm)) * 100.0f * (rcCommandThrottle) + mixerConfig()->rpm_limiter_idle_rpm * 100.0f;
             float acceleration = scaledRPMLimit - mixerRuntime.rpm_limiterPreviousRPMLimit;
             if (acceleration > 0) {
                 acceleration = MIN(acceleration, mixerRuntime.rpm_limiterAccelerationLimit);
@@ -367,55 +372,33 @@ static void applyRPMLimiter(void)
         } 
         else {
             throttle = throttle * mixerRuntime.rpm_limiterExpectedThrottleLimit;
-            scaledRPMLimit = ((mixerConfig()->rpm_limiter_rpm_limit))*100.0f;
+            scaledRPMLimit = ((mixerConfig()->rpm_limiter_rpm_limit)) * 100.0f;
         }
-
-        //get the rpm averaged across the motors and if any motor is saturated 
-        bool motorsSaturated = false;
-        for (int i = 0; i < getMotorCount(); i++) {
-            averageRPM += getDshotTelemetry(i);
-            if (motor[i] >= motorConfig()->maxthrottle) {
-                motorsSaturated = true;
-            }
-        }
-        averageRPM = 100 * averageRPM / (getMotorCount()*motorConfig()->motorPoleCount/2.0f);
-
-        //get the smoothed rpm to avoid d term noise
-        averageRPM_smoothed = mixerRuntime.rpm_limiterPreviousSmoothedRPM + mixerRuntime.rpm_limiterDelayK * (averageRPM - mixerRuntime.rpm_limiterPreviousSmoothedRPM); //kinda braindead to convert to rps then back
-
         float smoothedRPMError = averageRPM_smoothed - scaledRPMLimit;
         float rpm_limiterP = smoothedRPMError * mixerRuntime.rpm_limiterPGain; //+ when overspped
-        float rpm_limiterD = (smoothedRPMError-mixerRuntime.rpm_limiterPreviousSmoothedRPMError) * mixerRuntime.rpm_limiterDGain; // + when quickly going overspeed
-
+        float rpm_limiterD = (smoothedRPMError - mixerRuntime.rpm_limiterPreviousSmoothedRPMError) * mixerRuntime.rpm_limiterDGain; // + when quickly going overspeed
         if (mixerConfig()->rpm_limiter_rpm_linearization) {
             //don't let I term wind up if throttle is below the motor idle
             if (rcCommandThrottle < motorConfig()->digitalIdleOffsetValue / 10000.0f) {
-                mixerRuntime.rpm_limiterI *= 1.0f/(1.0f+(pidGetDT()*10.0f)); //slowly ramp down i term instead of resetting to avoid throttle pulsing cheats
-            } else {
+                mixerRuntime.rpm_limiterI *= 1.0f / (1.0f + (pidGetDT() * 10.0f)); //slowly ramp down i term instead of resetting to avoid throttle pulsing cheats
+            } else if (!motorsSaturated) {
                 //don't let I term wind up if motors are saturated. Otherwise, motors may stay at high throttle even after low throttle is commanded
-                if(!motorsSaturated)
-                {
-                    mixerRuntime.rpm_limiterI += smoothedRPMError * mixerRuntime.rpm_limiterIGain; // + when overspeed
-                }
+                mixerRuntime.rpm_limiterI += smoothedRPMError * mixerRuntime.rpm_limiterIGain;
             }
-            //sum our pid terms
-            PIDOutput = rpm_limiterP + mixerRuntime.rpm_limiterI + rpm_limiterD; //more + when overspeed, should be subtracted from throttle
-
+            PIDOutput = rpm_limiterP + mixerRuntime.rpm_limiterI + rpm_limiterD;
         } else {
             throttle = throttle * mixerRuntime.rpm_limiterExpectedThrottleLimit;
-            mixerRuntime.rpm_limiterI += smoothedRPMError * mixerRuntime.rpm_limiterIGain; // + when overspeed
+            mixerRuntime.rpm_limiterI += smoothedRPMError * mixerRuntime.rpm_limiterIGain;
             mixerRuntime.rpm_limiterI = MAX(mixerRuntime.rpm_limiterI, 0.0f);
-            PIDOutput = rpm_limiterP + mixerRuntime.rpm_limiterI + rpm_limiterD; //more + when overspeed, should be subtracted from throttle
+            PIDOutput = rpm_limiterP + mixerRuntime.rpm_limiterI + rpm_limiterD;
             if (PIDOutput > 0.05) {
                 mixerRuntime.rpm_limiterExpectedThrottleLimit = 0.9994 * mixerRuntime.rpm_limiterExpectedThrottleLimit;
             }
             if (PIDOutput < -0.05 && rcCommand[THROTTLE] > 1950 && !motorsSaturated) {
-                mixerRuntime.rpm_limiterExpectedThrottleLimit = (1+1-0.9994) * mixerRuntime.rpm_limiterExpectedThrottleLimit;
+                mixerRuntime.rpm_limiterExpectedThrottleLimit = 1.0006f * mixerRuntime.rpm_limiterExpectedThrottleLimit;
                 mixerRuntime.rpm_limiterExpectedThrottleLimit = MAX(mixerRuntime.rpm_limiterExpectedThrottleLimit, 1.0f);
             }
-
-            PIDOutput = MAX(PIDOutput,0.0f);
-
+            PIDOutput = MAX(PIDOutput, 0.0f);
         }
         if (mixerRuntime.rpm_limiter_init) {
             if (mixerConfig()->rpm_limiter_rpm_linearization) {
@@ -425,17 +408,14 @@ static void applyRPMLimiter(void)
             }
         }
         mixerRuntime.rpm_limiter_init = true;
-
-        //update previous values for next loop
         mixerRuntime.prevAverageRPM = averageRPM;
         mixerRuntime.rpm_limiterPreviousSmoothedRPM = averageRPM_smoothed;
         mixerRuntime.rpm_limiterPreviousSmoothedRPMError = smoothedRPMError;
         mixerRuntime.rpm_limiterPreviousRPMLimit = scaledRPMLimit;
-
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, averageRPM);
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, smoothedRPMError);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpm_limiterI*100.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpm_limiterD*10000.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpm_limiterI * 100.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpm_limiterD * 10000.0f);
     }
 }
 #endif
@@ -476,8 +456,10 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
 
     // Disarmed mode
     if (!ARMING_FLAG(ARMED)) {
+        #ifdef USE_RPM_LIMITER
         mixerRuntime.rpm_limiterI = 0;
         mixerRuntime.rpm_limiter_init = false;
+        #endif
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
