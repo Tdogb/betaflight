@@ -443,7 +443,7 @@ static void applyRPMLimiter(void)
 
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
-    applyRPMLimiter();
+    // applyRPMLimiter();
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
         float motorOutput = motorOutputMixSign * motorMix[i] + throttle * activeMixer[i].throttle;
         if (!mixerConfig()->govenor) {
@@ -692,7 +692,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         throttle = gpsRescueGetThrottle();
     }
 #endif
-
+    applyRPMLimiter();
     motorMixRange = motorMixMax - motorMixMin;
     if (mixerConfig()->mixer_type > MIXER_LEGACY) {
         applyMixerAdjustmentLinear(motorMix, airmodeEnabled);
