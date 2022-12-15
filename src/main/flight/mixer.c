@@ -346,7 +346,6 @@ static void applyFlipOverAfterCrashModeToMotors(void)
     }
 }
 
-#define USE_RPM_LIMITER
 #ifdef USE_RPM_LIMITER
 static void applyRPMLimiter(void)
 {
