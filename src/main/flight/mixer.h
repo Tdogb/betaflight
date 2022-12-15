@@ -99,6 +99,7 @@ typedef struct mixerConfig_s {
     bool rpm_limiter_rpm_linearization;
     uint16_t rpm_limiter_idle_rpm;
     uint8_t mixer_type;
+    uint8_t rpmLimiterSavedThrottleLimit;
 } mixerConfig_t;
 
 PG_DECLARE(mixerConfig_t, mixerConfig);

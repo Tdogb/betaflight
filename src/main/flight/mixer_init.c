@@ -60,7 +60,8 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .rpm_limiter_idle_rpm = 17,
     .rpm_limiter_acceleration_limit = 60,
     .rpm_limiter_deceleration_limit = 60,
-    .rpm_limiter_rpm_limit = 130,
+    .rpm_limiter_rpm_limit = 140,
+    .rpmLimiterSavedThrottleLimit = 100,
 );
 
 PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR_MIXER, 0);
@@ -333,16 +334,19 @@ void mixerInitProfile(void)
 #endif
 
 #ifdef USE_RPM_LIMITER
+    // mixerRuntime.rpmLimiterExpectedThrottleLimit = (float)(mixerConfig()->rpmLimiterSavedThrottleLimit) / 100.0f;
     mixerRuntime.rpmLimiterExpectedThrottleLimit = 1.0f;
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.0000015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.0001f * pidGetDT();
     mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.00000003f * pidGetPidFrequency();
     mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * 1000.0f * pidGetDT();
-    mixerRuntime.rpmLimiterDecelerationLimit = mixerConfig()->rpm_limiter_deceleration_limit * 1000.0f * pidGetDT();
     mixerRuntime.rpmLimiterI = 0.0f;
     mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0;
-    mixerRuntime.rpmLimiterDelayK = 800 * pidGetDT() / 20.0f;
+    pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
     mixerRuntime.rpmLimiterInit = false;
+    if (mixerConfig()->rpm_limiter_idle_rpm > mixerConfig()->rpm_limiter_rpm_limit) {
+        mixerConfigMutable()->rpm_limiter_rpm_limit = mixerConfig()->rpm_limiter_idle_rpm;
+    }
 #endif
 }
 
