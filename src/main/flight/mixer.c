@@ -455,8 +455,10 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
 
     // Disarmed mode
     if (!ARMING_FLAG(ARMED)) {
+        #ifdef USE_RPM_LIMITER
         mixerRuntime.rpmLimiterI = 0;
         mixerRuntime.rpmLimiterInit = false;
+        #endif
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
