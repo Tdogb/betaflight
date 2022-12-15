@@ -421,9 +421,9 @@ static void applyRPMLimiter(void)
         }
         if (mixerRuntime.govenor_init) {
             if (mixerConfig()->rpm_linearization) {
-                throttle = constrainf(-PIDOutput, 0.0f, 1.0f);
+                throttle = constrainf(-PIDOutput, 0.01f, 1.0f);
             } else {
-                throttle = constrainf(throttle-PIDOutput, 0.0f, 1.0f);
+                throttle = constrainf(throttle-PIDOutput, 0.01f, 1.0f);
             }
         }
         mixerRuntime.govenor_init = true;
