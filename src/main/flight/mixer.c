@@ -354,7 +354,7 @@ static void applyRPMLimiter(void)
 
         if (mixerConfig()->rpm_linearization) {
             //scales rpm setpoint between idle rpm and rpm limit based on throttle percent
-            RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit - mixerConfig()->govenor_idle_rpm))*100.0f*(rcCommandThrottle) + mixerConfig()->govenor_idle_rpm * 100.0f;
+            RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit - mixerConfig()->govenor_idle_rpm))*10.0f*(rcCommandThrottle) + mixerConfig()->govenor_idle_rpm * 10.0f;
             
             //limit the speed with which the rpm setpoint can increase based on the rpm_limiter_acceleration_limit cli command
             float acceleration = RPM_GOVENOR_LIMIT - mixerRuntime.govenorPreviousRPMLimit;
@@ -368,7 +368,7 @@ static void applyRPMLimiter(void)
             }
         } 
         else {
-            RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
+            RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*10.0f;
         }
 
         //get the rpm averaged across the motors
@@ -379,7 +379,7 @@ static void applyRPMLimiter(void)
                 motorsSaturated = true;
             }
         }
-        averageRPM = 100 * averageRPM / (getMotorCount()*motorConfig()->motorPoleCount/2.0f);
+        averageRPM = 20 * averageRPM / (getMotorCount()*motorConfig()->motorPoleCount);
 
         //get the smoothed rpm to avoid d term noise
         averageRPM_smoothed = mixerRuntime.govenorPreviousSmoothedRPM + mixerRuntime.govenorDelayK * (averageRPM - mixerRuntime.govenorPreviousSmoothedRPM); //kinda braindead to convert to rps then back
