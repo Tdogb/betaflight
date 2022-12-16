@@ -60,6 +60,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .govenor_acceleration_limit = 60,
     .govenor_deceleration_limit = 60,
     .govenor_rpm_limit = 130,
+    .rpm_limiter_i_winddown = 10,
     .mixer_type = MIXER_LEGACY,
 );
 

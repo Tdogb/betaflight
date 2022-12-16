@@ -99,6 +99,7 @@ typedef struct mixerConfig_s {
     bool rpm_linearization;
     uint16_t govenorThrottleLimitLearningTimeMS;
     uint16_t govenor_idle_rpm;
+    uint16_t rpm_limiter_i_winddown;
     uint8_t mixer_type;
 } mixerConfig_t;
 

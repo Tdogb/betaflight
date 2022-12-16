@@ -368,7 +368,6 @@ static void applyRPMLimiter(void)
             }
         } 
         else {
-            throttle = throttle * mixerRuntime.govenorExpectedThrottleLimit;
             RPM_GOVENOR_LIMIT = ((mixerConfig()->govenor_rpm_limit))*100.0f;
         }
 
@@ -392,7 +391,7 @@ static void applyRPMLimiter(void)
         if (mixerConfig()->rpm_linearization) {
             //don't let I term wind up if throttle is below the motor idle
             if (rcCommandThrottle < motorConfig()->digitalIdleOffsetValue / 10000.0f) {
-                mixerRuntime.govenorI *= 1.0f/(1.0f+(pidGetDT()*10.0f)); //slowly ramp down i term instead of resetting to avoid throttle pulsing cheats
+                mixerRuntime.govenorI *= 1.0f/(1.0f+(pidGetDT()*mixerConfig()->rpm_limiter_i_winddown)); //slowly ramp down i term instead of resetting to avoid throttle pulsing cheats
             } else {
                 //don't let I term wind up if motors are saturated. Otherwise, motors may stay at high throttle even after low throttle is commanded
                 if(!motorsSaturated)
@@ -421,9 +420,9 @@ static void applyRPMLimiter(void)
         }
         if (mixerRuntime.govenor_init) {
             if (mixerConfig()->rpm_linearization) {
-                throttle = constrainf(-PIDOutput, 0.01f, 1.0f);
+                throttle = constrainf(-PIDOutput, 0.0f, 1.0f);
             } else {
-                throttle = constrainf(throttle-PIDOutput, 0.01f, 1.0f);
+                throttle = constrainf(throttle-PIDOutput, 0.0f, 1.0f);
             }
         }
         mixerRuntime.govenor_init = true;
