@@ -63,7 +63,7 @@ typedef struct mixerRuntime_s {
     float rpmLimiterIGain;
     float rpmLimiterDGain;
     // float rpmLimiterPreviousSmoothedRPM;
-    float rpmLimiterPreviousRPMLimit;
+    uint16_t rpmLimiterPreviousRPMLimit;
     // float rpmLimiterDelayK;
     // float rpmLimiterLearningThrottleK;
     bool rpmLimiterInit;

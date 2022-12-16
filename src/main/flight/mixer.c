@@ -347,8 +347,32 @@ static void applyFlipOverAfterCrashModeToMotors(void)
 }
 
 #ifdef USE_RPM_LIMITER
+static void debugRPMLimiter(void) {
+    // int16_t averageRPM = 0;
+    // for (int i = 0; i < getMotorCount(); i++) {
+    //         averageRPM += getDshotTelemetry(i);
+    //         if (motor[i] >= motorConfig()->maxthrottle) {
+    //         }
+    //     }
+    // uint16_t averageRPM_temp = erpmToRpm(averageRPM / getMotorCount());
+    // DEBUG_SET(DEBUG_RPM_LIMITER, 0, averageRPM_temp);
+    // averageRPM = erpmToRpm(averageRPM / 4);
+    // if (averageRPM_temp < 0) {
+    //     DEBUG_SET(DEBUG_RPM_LIMITER, 1, 1);
+    // } else {
+    //     DEBUG_SET(DEBUG_RPM_LIMITER, 1, 2);
+    // }
+    // if (averageRPM < 0) {
+    //     DEBUG_SET(DEBUG_RPM_LIMITER, 2, 1);
+    // } else {
+    //     DEBUG_SET(DEBUG_RPM_LIMITER, 2, 2);
+    // }
+    // DEBUG_SET(DEBUG_RPM_LIMITER, 2, erpmToRpm(getDshotTelemetry(1)));
+    // DEBUG_SET(DEBUG_RPM_LIMITER, 3, 200 * getDshotTelemetry(1) / ((uint16_t)(motorConfig()->motorPoleCount)));
+}
 static void applyRPMLimiter(void)
 {
+    debugRPMLimiter();
     if (mixerConfig()->rpm_limiter && motorConfig()->dev.useDshotTelemetry) {
         float scaledRPMLimit = 0;
         float pidOutput = 0;
@@ -362,10 +386,10 @@ static void applyRPMLimiter(void)
                 motorsSaturated = true;
             }
         }
-        averageRPM = 100 * averageRPM / (getMotorCount() * motorConfig()->motorPoleCount / 2.0f);
+        averageRPM = 20 * averageRPM / (getMotorCount() * motorConfig()->motorPoleCount);
         averageRPMSmoothed = pt1FilterApply(&mixerRuntime.averageRPMFilter, averageRPM);
         if (mixerConfig()->rpm_limiter_rpm_linearization) {
-            scaledRPMLimit = (mixerConfig()->rpm_limiter_rpm_limit - mixerConfig()->rpm_limiter_idle_rpm) * 100.0f * rcCommandThrottle + mixerConfig()->rpm_limiter_idle_rpm * 100.0f;
+            scaledRPMLimit = (mixerConfig()->rpm_limiter_rpm_limit - mixerConfig()->rpm_limiter_idle_rpm) * 10 * rcCommandThrottle + mixerConfig()->rpm_limiter_idle_rpm * 10;
             float acceleration = scaledRPMLimit - mixerRuntime.rpmLimiterPreviousRPMLimit;
             if (acceleration > 0) {
                 acceleration = MIN(acceleration, mixerRuntime.rpmLimiterAccelerationLimit);
@@ -373,7 +397,7 @@ static void applyRPMLimiter(void)
             }
         } 
         else {
-            scaledRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
+            scaledRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 10;
         }
         float smoothedRPMError = averageRPMSmoothed - scaledRPMLimit;
         float rpmLimiterP = smoothedRPMError * mixerRuntime.rpmLimiterPGain; //+ when overspped
@@ -416,6 +440,11 @@ static void applyRPMLimiter(void)
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, smoothedRPMError);
         DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpmLimiterI * 100.0f);
         DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpmLimiterD * 10000.0f);
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 0, getDshotTelemetry(0));
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 1, getDshotTelemetry(1));
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 2, getDshotTelemetry(2));
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 3, getDshotTelemetry(3));
+
     }
 }
 #endif
