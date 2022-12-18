@@ -422,7 +422,7 @@ static void applyRPMLimiter(void)
             if (mixerConfig()->rpm_linearization) {
                 throttle = constrainf(-PIDOutput, 0.0f, 1.0f);
             } else {
-                throttle = constrainf(throttle-PIDOutput, 0.0f, 1.0f);
+                throttle = constrainf(throttle-PIDOutput, 0.04f, 1.0f);
             }
         }
         mixerRuntime.govenor_init = true;
