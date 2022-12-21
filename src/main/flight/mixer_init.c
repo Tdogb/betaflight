@@ -55,15 +55,13 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .crashflip_expo = 35,
     .mixer_type = MIXER_LEGACY,
     .rpm_limiter = false,
-    .rpm_limiter_p = 20,
-    .rpm_limiter_i = 6,
-    .rpm_limiter_d = 7,
-    .rpm_limiter_rpm_linearization = true,
-    .rpm_limiter_idle_rpm = 17,
-    .rpm_limiter_acceleration_limit = 60,
-    .rpm_limiter_deceleration_limit = 60,
-    .rpm_limiter_rpm_limit = 140,
-    .rpmLimiterSavedThrottleLimit = 100,
+    .rpm_limiter_p = 10,
+    .rpm_limiter_i = 10,
+    .rpm_limiter_d = 5,
+    .rpm_limiter_rpm_limit = 185,
+    .rpm_limiter_acceleration_limiting = false,
+    .rpm_limiter_acceleration_limit = 5000,
+    .rpm_limiter_learned_correction_factor = 1000,
     .motor_kv = 2070,
 );
 
@@ -337,22 +335,20 @@ void mixerInitProfile(void)
 #endif
 
 #ifdef USE_RPM_LIMITER
-    // mixerRuntime.rpmLimiterExpectedThrottleLimit = (float)(mixerConfig()->rpmLimiterSavedThrottleLimit) / 100.0f;
-    mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_idle_rpm > mixerConfig()->rpm_limiter_rpm_limit ? mixerConfig()->rpm_limiter_idle_rpm : mixerConfig()->rpm_limiter_rpm_limit * 10.0f;
-    float maxExpectedRPMs = mixerConfig()->motor_kv * getBatteryVoltage();
-    mixerRuntime.rpmLimiterExpectedThrottleLimit = MAX(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs);
+    float maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv); //number is a placeholder for getBatteryVoltage()
+    mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs);
+    mixerRuntime.rpmLimiterLearnedCorrectionFactor = mixerConfig()->rpm_limiter_learned_correction_factor * mixerRuntime.rpmLimiterExpectedThrottleLimit / 1000.0f;
+    // mixerRuntime.rpmLimiterearnedCorrectionFactor = 1.0f * mixerRuntime.rpmLimiterExpectedThrottleLimit;
+    mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.000015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.001f * pidGetDT();
     mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.0000003f * pidGetPidFrequency();
-    // mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * pidGetDT();
-    mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * pidGetDT();
-    mixerRuntime.rpmLimiterAccelerationLimit = scaleRangef(mixerRuntime.rpmLimiterAccelerationLimit, 0.0f, 60.0f, 0.0f, 1.0f);
+    mixerRuntime.rpmLimiterAccelerationLimit = scaleRangef((float)(mixerConfig()->rpm_limiter_acceleration_limit), 0.0f, 10000.0f, 0.0f, 1.0f) / pidGetDT(); //increase accel limit when freq decreases (period increases)
     mixerRuntime.rpmLimiterI = 0.0f;
     mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0.0f;
     mixerRuntime.rpmLimiterThrottlePrevious = 0.0f;
+    mixerRuntime.rpmLimiterThrottleVelocityPrevious = 0.0f;
     pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
-    mixerRuntime.rpmLimiterInit = false;
-
 #endif
 }
 

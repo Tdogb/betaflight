@@ -215,6 +215,7 @@ void batteryUpdatePresence(void)
 
             if (!ARMING_FLAG(ARMED)) {
                 changePidProfileFromCellCount(batteryCellCount);
+                updateRPMLimiterExpectedThrottleLimit();
             }
         }
         batteryWarningVoltage = batteryCellCount * batteryConfig()->vbatwarningcellvoltage;
