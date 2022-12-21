@@ -335,11 +335,11 @@ void mixerInitProfile(void)
 #endif
 
 #ifdef USE_RPM_LIMITER
+    mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
     float maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv); //number is a placeholder for getBatteryVoltage()
     mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs);
-    mixerRuntime.rpmLimiterLearnedCorrectionFactor = mixerConfig()->rpm_limiter_learned_correction_factor * mixerRuntime.rpmLimiterExpectedThrottleLimit / 1000.0f;
-    // mixerRuntime.rpmLimiterearnedCorrectionFactor = 1.0f * mixerRuntime.rpmLimiterExpectedThrottleLimit;
-    mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
+    // mixerRuntime.rpmLimiterLearnedCorrectionFactor = mixerRuntime.rpmLimiterExpectedThrottleLimit * mixerConfig()->rpm_limiter_learned_correction_factor / 1000.0f;
+    // mixerRuntime.rpmLimiterLearnedCorrectionFactor = 1.0f * mixerRuntime.rpmLimiterExpectedThrottleLimit;
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.000015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.001f * pidGetDT();
     mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.0000003f * pidGetPidFrequency();

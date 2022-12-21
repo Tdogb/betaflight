@@ -372,7 +372,7 @@ static void applyRPMLimiter(void)
     if (mixerConfig()->rpm_limiter && motorConfig()->dev.useDshotTelemetry && ARMING_FLAG(ARMED)) {
         float averageRPMSmoothed = pt1FilterApply(&mixerRuntime.averageRPMFilter, getAverageRPM());
         float smoothedRPMError = averageRPMSmoothed - mixerRuntime.rpmLimiterRPMLimit;
-        throttle *= mixerRuntime.rpmLimiterLearnedCorrectionFactor;
+        throttle *= mixerRuntime.rpmLimiterExpectedThrottleLimit;
         float rpmLimiterP = smoothedRPMError * mixerRuntime.rpmLimiterPGain; //+ when overspped
         mixerRuntime.rpmLimiterI += smoothedRPMError * mixerRuntime.rpmLimiterIGain;
         mixerRuntime.rpmLimiterI = MAX(0.0f, mixerRuntime.rpmLimiterI);
@@ -380,18 +380,18 @@ static void applyRPMLimiter(void)
         float pidOutput = rpmLimiterP + mixerRuntime.rpmLimiterI + rpmLimiterD;
         // Throttle limit learning
         if (smoothedRPMError > -10.0f && rcCommand[THROTTLE] < 1950) {
-            mixerRuntime.rpmLimiterLearnedCorrectionFactor *= 1.0f - 0.0006f;
+            mixerRuntime.rpmLimiterExpectedThrottleLimit *= 1.0f - 0.0006f;
         } else if (pidOutput < -0.05f && rcCommand[THROTTLE] > 1950 && !isMotorSaturated()) { // Throttle accel corresponds with motor accel
-            mixerRuntime.rpmLimiterLearnedCorrectionFactor *= 1.0f + 0.0004f;
+            mixerRuntime.rpmLimiterExpectedThrottleLimit *= 1.0f + 0.0004f;
         }
-        mixerRuntime.rpmLimiterLearnedCorrectionFactor = constrainf(mixerRuntime.rpmLimiterLearnedCorrectionFactor, 0.0f, 1.0f);
+        mixerRuntime.rpmLimiterExpectedThrottleLimit = constrainf(mixerRuntime.rpmLimiterExpectedThrottleLimit, 0.0f, 1.0f);
         // Output
         pidOutput = MAX(0.0f, pidOutput);
         throttle = constrainf(throttle-pidOutput, 0.0f, 1.0f);
         mixerRuntime.rpmLimiterPreviousSmoothedRPMError = smoothedRPMError;
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, mixerRuntime.rpmLimiterExpectedThrottleLimit * 100.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpmLimiterLearnedCorrectionFactor);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpmLimiterLearnedCorrectionFactor * 100.0f);
         DEBUG_SET(DEBUG_RPM_LIMITER, 3, throttle * 100.0f);
         // DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixerRuntime.rpmLimiterLearnedCorrectionFactor * 100.0f);
         // DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpmLimiterD * 10000.0f);
