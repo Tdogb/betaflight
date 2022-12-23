@@ -365,8 +365,6 @@ static bool isMotorSaturated(void) //Placeholder function
     return false;
 }
 
-// Put  accel limiting in rc (no, this is for motor throttle)
-// change expectedthrottlelimit to only be in mixer_init?
 static void applyRPMLimiter(void)
 {
     if (mixerConfig()->rpm_limiter && motorConfig()->dev.useDshotTelemetry && ARMING_FLAG(ARMED)) {
