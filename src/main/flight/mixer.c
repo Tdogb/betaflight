@@ -344,7 +344,6 @@ static void applyFlipOverAfterCrashModeToMotors(void)
         }
     }
 }
-#define USE_RPM_LIMITER
 #ifdef USE_RPM_LIMITER
 static float getAverageRPM(void) // Placeholder function
 {
