@@ -372,11 +372,10 @@ static void applyRPMLimiter(void)
     if (mixerConfig()->rpm_limiter && motorConfig()->dev.useDshotTelemetry && ARMING_FLAG(ARMED)) {
         float averageRPM = getAverageRPM();
         float averageRPMSmoothed = pt1FilterApply(&mixerRuntime.averageRPMFilter, averageRPM);
-        
         float smoothedRPMError = averageRPMSmoothed - mixerRuntime.rpmLimiterRPMLimit;
         // PID
-        float rpmLimiterP = averageRPM * mixerRuntime.rpmLimiterPGain; //+ when overspped
-        mixerRuntime.rpmLimiterI += averageRPM * mixerRuntime.rpmLimiterIGain;
+        float rpmLimiterP = smoothedRPMError * mixerRuntime.rpmLimiterPGain; //+ when overspped
+        mixerRuntime.rpmLimiterI += smoothedRPMError * mixerRuntime.rpmLimiterIGain;
         mixerRuntime.rpmLimiterI = MAX(0.0f, mixerRuntime.rpmLimiterI);
         float rpmDerivative = smoothedRPMError - mixerRuntime.rpmLimiterPreviousSmoothedRPMError;
         float rpmLimiterD = rpmDerivative * mixerRuntime.rpmLimiterDGain; // + when quickly going overspeed
@@ -391,15 +390,15 @@ static void applyRPMLimiter(void)
         throttle *= mixerRuntime.rpmLimiterExpectedThrottleLimit;
         // Acceleration Limiting
         float filteredRPMDerivative = pt1FilterApply(&mixerRuntime.accelLimitingFilter, rpmDerivative);
-        pidOutput += mixerConfig()->rpm_limiter_acceleration_limiting ? (filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain : 0; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
+        pidOutput += mixerConfig()->rpm_limiter_acceleration_limiting ? MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain : 0; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
         // Output
         pidOutput = MAX(0.0f, pidOutput);
         throttle = constrainf(throttle-pidOutput, 0.0f, 1.0f);
         mixerRuntime.rpmLimiterPreviousSmoothedRPMError = smoothedRPMError;
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 1, rpmDerivative * 1000.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, (rpmDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain * 1000.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 3, averageRPMAccelSmoothed * 1000.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 1, (filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain * 100.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 2, rpmDerivative * 1000.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 3, filteredRPMDerivative * 1000.0f);
     }
 }
 
