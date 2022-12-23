@@ -55,19 +55,20 @@ typedef struct mixerRuntime_s {
 #endif
 #if defined(USE_RPM_LIMITER)
     float rpmLimiterExpectedThrottleLimit;
-    float rpmLimiterLearnedCorrectionFactor;
     float rpmLimiterRPMLimit;
     float rpmLimiterAccelerationLimit;
-    float prevAverageRPM;
-    float rpmLimiterPreviousSmoothedRPMError;
+    // float prevAverageRPM;
     float rpmLimiterPGain;
     float rpmLimiterIGain;
     float rpmLimiterI;
     float rpmLimiterDGain;
+    float rpmLimiterPreviousSmoothedRPMError;
     float rpmLimiterPreviousRPMLimit;
-    float rpmLimiterThrottlePrevious;
-    float rpmLimiterThrottleVelocityPrevious;
+    // float rpmLimiterThrottlePrevious;
+    // float rpmLimiterThrottleVelocityPrevious;
+    float rpmLimiterAccelGain;
     pt1Filter_t averageRPMFilter;
+    pt1Filter_t accelLimitingFilter;
 #endif
 } mixerRuntime_t;
 
