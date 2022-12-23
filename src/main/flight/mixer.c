@@ -390,15 +390,17 @@ static void applyRPMLimiter(void)
         throttle *= mixerRuntime.rpmLimiterExpectedThrottleLimit;
         // Acceleration Limiting
         float filteredRPMDerivative = pt1FilterApply(&mixerRuntime.accelLimitingFilter, rpmDerivative);
-        pidOutput += mixerConfig()->rpm_limiter_acceleration_limiting ? MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain : 0; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
+        if (mixerConfig()->rpm_limiter_acceleration_limiting) {
+            pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
+        }
         // Output
         pidOutput = MAX(0.0f, pidOutput);
         throttle = constrainf(throttle-pidOutput, 0.0f, 1.0f);
         mixerRuntime.rpmLimiterPreviousSmoothedRPMError = smoothedRPMError;
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 1, (filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain * 100.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, rpmDerivative * 1000.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 3, filteredRPMDerivative * 1000.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 1, throttle * 100.0f);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 2, filteredRPMDerivative);
+        DEBUG_SET(DEBUG_RPM_LIMITER, 3, mixerRuntime.rpmLimiterI * 1000.0f);
     }
 }
 

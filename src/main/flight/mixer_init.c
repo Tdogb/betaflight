@@ -55,7 +55,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .crashflip_expo = 35,
     .mixer_type = MIXER_LEGACY,
     .rpm_limiter = false,
-    .rpm_limiter_p = 10,
+    .rpm_limiter_p = 25,
     .rpm_limiter_i = 10,
     .rpm_limiter_d = 8,
     .rpm_limiter_rpm_limit = 185,
@@ -346,7 +346,7 @@ void mixerInitProfile(void)
     mixerRuntime.rpmLimiterI = 0.0f;
     mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0.0f;
     pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
-    pt1FilterUpdateCutoff(&mixerRuntime.accelLimitingFilter, 160 * pidGetDT() / 20.0f); //0.1s to full throttle
+    pt1FilterUpdateCutoff(&mixerRuntime.accelLimitingFilter, 200 * pidGetDT() / 20.0f); //0.1s to full throttle
 #endif
 }
 
