@@ -98,6 +98,8 @@ typedef struct mixerConfig_s {
     uint16_t rpm_limiter_acceleration_limit;
     uint16_t motor_kv;
     uint16_t rpm_limiter_accel_p;
+    bool rpm_limiter_linearization;
+    uint16_t rpm_limiter_idle_rpm;
     uint8_t mixer_type;
 } mixerConfig_t;
 
