@@ -27,6 +27,8 @@
 #include "build/build_config.h"
 #include "build/debug.h"
 
+#include "common/maths.h"
+
 #include "config/config.h"
 #include "config/feature.h"
 
@@ -52,6 +54,15 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 35,
     .mixer_type = MIXER_LEGACY,
+    .rpm_limiter = false,
+    .rpm_limiter_p = 25,
+    .rpm_limiter_i = 10,
+    .rpm_limiter_d = 8,
+    .rpm_limiter_rpm_limit = 185,
+    .rpm_limiter_acceleration_limiting = false,
+    .rpm_limiter_acceleration_limit = 1000,
+    .rpm_limiter_accel_p = 100,
+    .motor_kv = 2070,
 );
 
 PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR_MIXER, 0);
@@ -321,6 +332,21 @@ void mixerInitProfile(void)
             mixerRuntime.vbatSagCompensationFactor = ((float)currentPidProfile->vbat_sag_compensation) / 100.0f;
         }
     }
+#endif
+
+#ifdef USE_RPM_LIMITER
+    mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
+    float maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv);
+    mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs);
+    mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.000015f;
+    mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.001f * pidGetDT();
+    mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.0000003f * pidGetPidFrequency();
+    mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * 1e5f * sq(pidGetDT()); //increase accel limit when freq decreases (period increases)
+    mixerRuntime.rpmLimiterAccelGain = mixerConfig()->rpm_limiter_accel_p * 0.01f;
+    mixerRuntime.rpmLimiterI = 0.0f;
+    mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0.0f;
+    pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
+    pt1FilterUpdateCutoff(&mixerRuntime.accelLimitingFilter, 200 * pidGetDT() / 20.0f); //0.1s to full throttle
 #endif
 }
 
