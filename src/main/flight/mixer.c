@@ -428,7 +428,7 @@ static void applyRPMLimiter(void)
         //     // pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit * pidGetDT() * 1e5f) * mixerRuntime.rpmLimiterAccelGain; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
         //     // pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
         //     throttle *= MIN(1.0f, (mixerRuntime.rpmLimiterAccelerationLimit / filteredRPMDerivative) * mixerRuntime.rpmLimiterAccelGain); // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
-            pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain;
+            pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain * pidGetDT() * mixerRuntime.rpmLimiterExpectedThrottleLimit * mixerRuntime.maxExpectedRPMs;
         }
         // Output
         pidOutput = MAX(0.0f, pidOutput);
