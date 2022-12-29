@@ -347,8 +347,8 @@ void mixerInitProfile(void)
     mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * 10.0f; //increase accel limit when freq decreases (period increases)
     mixerRuntime.rpmLimiterAccelGain = MIN(1.0f, mixerConfig()->rpm_limiter_accel_p * 0.001f);
     mixerRuntime.rpmLimiterI = 0.0f;
-    mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0.0f;
-    mixerRuntime.rpmLimiterPreviousRPMLimit = 0.0f;
+    mixerRuntime.rpmLimiterPreviousSmoothedRPMError = -mixerRuntime.rpmLimiterRPMLimit;
+    mixerRuntime.rpmLimiterPreviousRPMLimit = mixerRuntime.rpmLimiterIdleRPM;
     mixerRuntime.rpmLimiterPreviousThrottle = 0.0f;
     pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
     pt1FilterUpdateCutoff(&mixerRuntime.accelLimitingFilter, 60 * pidGetDT() / 20.0f); //0.1s to full throttle
