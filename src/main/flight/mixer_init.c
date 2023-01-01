@@ -59,9 +59,6 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .rpm_limiter_i = 10,
     .rpm_limiter_d = 8,
     .rpm_limiter_rpm_limit = 185,
-    .rpm_limiter_acceleration_limiting = false,
-    .rpm_limiter_acceleration_limit = 1000,
-    .rpm_limiter_accel_p = 100,
     .motor_kv = 2070,
 );
 
@@ -341,12 +338,9 @@ void mixerInitProfile(void)
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.00015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.01f * pidGetDT();
     mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.000003f * pidGetPidFrequency();
-    mixerRuntime.rpmLimiterAccelerationLimit = mixerConfig()->rpm_limiter_acceleration_limit * 1e4f * sq(pidGetDT()); //increase accel limit when freq decreases (period increases)
-    mixerRuntime.rpmLimiterAccelGain = mixerConfig()->rpm_limiter_accel_p * 0.1f;
     mixerRuntime.rpmLimiterI = 0.0f;
     mixerRuntime.rpmLimiterPreviousSmoothedRPMError = -mixerRuntime.rpmLimiterRPMLimit;
     pt1FilterUpdateCutoff(&mixerRuntime.averageRPMFilter, 800 * pidGetDT() / 20.0f);
-    pt1FilterUpdateCutoff(&mixerRuntime.accelLimitingFilter, 200 * pidGetDT() / 20.0f); //0.1s to full throttle
 #endif
 }
 

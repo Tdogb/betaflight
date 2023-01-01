@@ -433,8 +433,7 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
     if (!ARMING_FLAG(ARMED)) {
         #ifdef USE_RPM_LIMITER
         mixerRuntime.rpmLimiterI = 0.0f;
-        mixerRuntime.rpmLimiterPreviousSmoothedRPMError = 0;
-        // mixerRuntime.rpmLimiterThrottlePrevious = 0.0f;
+        mixerRuntime.rpmLimiterPreviousSmoothedRPMError = -mixerRuntime.rpmLimiterRPMLimit;
         #endif
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
