@@ -351,7 +351,7 @@ static float getAverageRPM(void) // Placeholder function
     for (int i = 0; i < getMotorCount(); i++) {
         averageRPM += getDshotTelemetry(i);
     }
-    return (averageRPM / (getMotorCount() * motorConfig()->motorPoleCount)) * 200;
+    return (averageRPM / (getMotorCount() * motorConfig()->motorPoleCount)) * 20;
 }
 
 static bool isMotorSaturated(void) //Placeholder function
@@ -385,11 +385,6 @@ static void applyRPMLimiter(void)
         }
         mixerRuntime.rpmLimiterExpectedThrottleLimit = constrainf(mixerRuntime.rpmLimiterExpectedThrottleLimit, 0.01f, 1.0f);
         throttle *= mixerRuntime.rpmLimiterExpectedThrottleLimit;
-        // Acceleration Limiting
-        // float filteredRPMDerivative = pt1FilterApply(&mixerRuntime.accelLimitingFilter, rpmDerivative);
-        // if (mixerConfig()->rpm_limiter_acceleration_limiting) {
-        //     pidOutput += MAX(0.0f, filteredRPMDerivative - mixerRuntime.rpmLimiterAccelerationLimit) * mixerRuntime.rpmLimiterAccelGain; // Convert accel limit to units of (rpm-prevrpm / dt - previous / dt) / dt
-        // }
         // Output
         pidOutput = MAX(0.0f, pidOutput);
         throttle = constrainf(throttle-pidOutput, 0.0f, 1.0f);
