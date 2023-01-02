@@ -352,27 +352,26 @@ static void applyAutoCrashMode(void) {
     if (ABS(rollAngle) > 90.0f) {
         rollAngle = (rollAngle < 0.0f ? -180.0f : 180.0f) - rollAngle;
     }
-    float rollCorrection = 1 - ABS((1.0f-(rollAngle / 90.0f)));
-    float pitchCorrection = 1 - ABS((1.0f-(pitchAngle / 90.0f)));
-    // float motor_fake[8];
+    float rollCorrection = 1.0f - ABS((1.0f-(rollAngle / 90.0f)));
+    float pitchCorrection = 1.0f - ABS((1.0f-(pitchAngle / 90.0f)));
+    float motor_fake[8];
     for (int i = 0; i < mixerRuntime.motorCount; ++i) {
-        float motorOutputNormalised = pitchCorrection + rollCorrection;
+        float motorOutputNormalised =
+                SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
+                SIGN(rollCorrection) * mixerRuntime.currentMixer[i].roll;
         motorOutputNormalised = constrainf(flipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
         float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
+        motorOutput = motorOutput < 0.1 ? 0.0f : motorOutput; // Apply deadband
         // Add a little bit to the motorOutputMin so props aren't spinning when sticks are centered
-        motorOutput = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
-        // motor_fake[i] = motorOutput;
+        // motorOutput = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
+        motor_fake[i] = motorOutput;
     }
-
-    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerRuntime.currentMixer[0].roll * 100.0f);
-    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerRuntime.currentMixer[1].roll * 100.0f);
-    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerRuntime.currentMixer[2].roll * 100.0f);
-    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerRuntime.currentMixer[3].roll * 100.0f);
-
+    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, rollCorrection * 100.0f);
+    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, rollAngle * 100.0f);
     // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, motor_fake[0] * 100.0f);
     // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, motor_fake[1] * 100.0f);
-    // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, motor_fake[2] * 100.0f);
-    // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 3, motor_fake[3] * 100.0f);
+    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, motor_fake[2] * 100.0f);
+    DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 3, motor_fake[3] * 100.0f);
     // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, 100 - ABS(100 * (1.0f-(rollAngle / 90.0f))));
 }
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
