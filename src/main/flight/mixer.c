@@ -367,6 +367,8 @@ static void applyAutoCrashMode(void) {
             motorOutputNormalised = constrainf(flipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
             float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
             motorOutput = motorOutput < 0.1 ? 0.0f : motorOutput; // Apply deadband
+            motorOutput = mixerRuntime.oldMotorOutput[i] + constrainf(motorOuput - mixerRuntime.oldMotorOutput[i], -mixerRuntime.crashflipMotorAccel, mixerRuntime.crashflipMotorAccel);
+            mixerRuntime.oldMotorOutput = motorOutput;
             // Add a little bit to the motorOutputMin so props aren't spinning when sticks are centered
             // motorOutput = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
             motor_fake[i] = motorOutput;
