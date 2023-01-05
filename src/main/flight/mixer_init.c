@@ -322,6 +322,7 @@ void mixerInitProfile(void)
         }
     }
 #endif
+    mixerRuntime.autoCrashflipOldMotorOutput = 0.0f;
 }
 
 #ifdef USE_LAUNCH_CONTROL
