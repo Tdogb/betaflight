@@ -322,7 +322,14 @@ void mixerInitProfile(void)
         }
     }
 #endif
-    mixerRuntime.autoCrashflipOldMotorOutput = 0.0f;
+    for (int i = 0; i < 8; i++) {
+        mixerRuntime.autoCrashflipPreviousMotorOutputs[i] = 0.0f;
+    }
+    // Heavy 7"
+    
+    // Light 6s 5" race quad
+
+    // Tiny whoop
 }
 
 #ifdef USE_LAUNCH_CONTROL

@@ -347,30 +347,20 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 // }
 
 // static void applyAutoCrashMode(void) {
+// static void calculateMotorsFromRollandPitchCorrection(void)
+// {
+
+// }
+
 static void applyFlipOverAfterCrashModeToMotors(void) 
 {
     if (ARMING_FLAG(ARMED)) {
-        float flipPower = 0.1f;
-        // float pitchAngle = attitude.values.pitch / 10.0f;
-        // float rollAngle = attitude.values.roll / 10.0f;
+        float flipPower = mixerConfig()->crashflip_motor_percent / 100.0f;
+        float rightSideUpFlipPower = flipPower / 2.0f;
         float quadVec[3] = {0,0,1};
         applyMatrixRotation(quadVec, (struct fp_rotationMatrix_s*)rMat);
         float crashflipPitch = -quadVec[0];
         float crashflipRoll = quadVec[1];
-        // float offset = 0.5;
-        // float rollCorrection = SIGN(rollAngle) * (1.0f / offset) * ((ABS(rollAngle) / 180.0f) - offset);
-        // float pitchCorrection = SIGN(pitchAngle) * (1.0f / offset) * ((ABS(pitchAngle) / 180.0f) - offset);
-        // float absRollCorrection = ABS(rollCorrection);
-        // float absPitchCorrection = ABS(pitchCorrection);
-        // if (ABS(pitchCorrection) - ABS(rollCorrection) > 0.1f) {
-            // if (absPitchCorrection > absRollCorrection) {
-            //     rollCorrection = 0;
-            // } else if (absPitchCorrection < absRollCorrection) {
-            //     pitchCorrection = 0;
-            // }
-        // }
-        // float rollCorrection = -SIGN(quadVec[1]) * (1 - ABS(quadVec[1]));
-        // float pitchCorrection = -SIGN(quadVec[0]) * (1 - ABS(quadVec[0]));
         float rollCorrection = crashflipRoll;
         float pitchCorrection = crashflipPitch;
         if (ABS(ABS(crashflipRoll) - ABS(crashflipPitch)) > 0.15f) {
@@ -383,28 +373,33 @@ static void applyFlipOverAfterCrashModeToMotors(void)
         }
         if (quadVec[2] < 0) {
             for (int i = 0; i < mixerRuntime.motorCount; ++i) {
-                // Should slowly ramp up motor output
                 float motorOutputNormalised =
                         SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
                         SIGN(rollCorrection) * mixerRuntime.currentMixer[i].roll;
-                // if (motorOutputNonNormalized < 0.25) { motorOutputNormalised = 0.0f; }
                 motorOutputNormalised = constrainf(flipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
                 float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
                 motor[i] = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
-                // motorOutput = motorOutput < 0.1 ? 0.0f : motorOutput; // Apply deadband
-                // motorOutput = mixerRuntime.oldMotorOutput[i] + constrainf(motorOuput - mixerRuntime.oldMotorOutput[i], -mixerRuntime.crashflipMotorAccel, mixerRuntime.crashflipMotorAccel);
+                float acceleration = motor[i] - mixerRuntime.autoCrashflipPreviousMotorOutputs[i];
+                if (mixerConfig()->crashflip_expo < 99) {
+                    motor[i] = MIN(mixerConfig()->crashflip_expo * pidGetDT(), mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration);
+                }
+                DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerConfig()->crashflip_expo * pidGetDT() * pidGetPidFrequency());
+                DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, (mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration) * pidGetPidFrequency());
+            }
+        } else if (ABS(crashflipPitch) > 17.0f/45.0f || ABS(crashflipRoll) > 17.0f/45.0f) {
+            for (int i = 0; i < mixerRuntime.motorCount; ++i) {
+                float motorOutputNormalised =
+                    SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
+                    SIGN(rollCorrection) * mixerRuntime.currentMixer[i].roll;
+                motorOutputNormalised = constrainf(rightSideUpFlipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
+                float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
+                motor[i] = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
             }
         } else {
             for (int i = 0; i < mixerRuntime.motorCount; i++) {
                 motor[i] = motor_disarmed[i];
             }
         }
-        // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, rollAngle);
-        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, quadVec[0] * 100.0f);
-        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, quadVec[1] * 100.0f);
-        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 3, quadVec[2] * 100.0f);
-        // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, rollCorrection * 100.0f);
-        // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 3, pitchCorrection * 100.0f);
     }  else {
         // Disarmed mode
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
@@ -564,7 +559,6 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     // applyAutoCrashMode();
     if (isFlipOverAfterCrashActive()) {
         applyFlipOverAfterCrashModeToMotors();
-
         return;
     }
 
