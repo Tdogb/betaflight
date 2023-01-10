@@ -98,3 +98,4 @@ void resetTryingToArm();
 void subTaskTelemetryPollSensors(timeUs_t currentTimeUs);
 
 bool isLaunchControlActive(void);
+void autoCrashflipSwitchMotorsToCrashMode(int crashMode);

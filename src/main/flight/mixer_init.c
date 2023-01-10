@@ -330,6 +330,7 @@ void mixerInitProfile(void)
     // Light 6s 5" race quad
 
     // Tiny whoop
+    mixerRuntime.autoCrashflipPreviousMode = 1;
 }
 
 #ifdef USE_LAUNCH_CONTROL

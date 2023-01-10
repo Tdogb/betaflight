@@ -67,6 +67,14 @@ typedef enum mixerType
     MIXER_DYNAMIC = 2,
 } mixerType_e;
 
+typedef enum autoCrashFlipMode
+{
+    CRASHFLIP_PURE = 0,
+    CRASHFLIP_STABILIZE = 1,
+    CRASHFLIP_DEADZONE_FROM_PURE = 2,
+    CRASHFLIP_DEADZONE_FROM_STABILIZE = 3,
+} autoCrashFlipMode_e;
+
 // Custom mixer data per motor
 typedef struct motorMixer_s {
     float throttle;

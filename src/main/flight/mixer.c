@@ -352,11 +352,11 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 
 // }
 
-static void applyFlipOverAfterCrashModeToMotors(void) 
+static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void) 
 {
     if (ARMING_FLAG(ARMED)) {
         float flipPower = mixerConfig()->crashflip_motor_percent / 100.0f;
-        float rightSideUpFlipPower = flipPower / 2.0f;
+        // float rightSideUpFlipPower = flipPower / 2.0f;
         float quadVec[3] = {0,0,1};
         applyMatrixRotation(quadVec, (struct fp_rotationMatrix_s*)rMat);
         float crashflipPitch = -quadVec[0];
@@ -386,18 +386,18 @@ static void applyFlipOverAfterCrashModeToMotors(void)
                 DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerConfig()->crashflip_expo * pidGetDT() * pidGetPidFrequency());
                 DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, (mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration) * pidGetPidFrequency());
             }
+            mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_PURE;
+            return CRASHFLIP_PURE;
         } else if (ABS(crashflipPitch) > 17.0f/45.0f || ABS(crashflipRoll) > 17.0f/45.0f) {
-            for (int i = 0; i < mixerRuntime.motorCount; ++i) {
-                float motorOutputNormalised =
-                    SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
-                    SIGN(rollCorrection) * mixerRuntime.currentMixer[i].roll;
-                motorOutputNormalised = constrainf(rightSideUpFlipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
-                float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
-                motor[i] = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
-            }
+            mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_STABILIZE;
+            return CRASHFLIP_STABILIZE;
         } else {
-            for (int i = 0; i < mixerRuntime.motorCount; i++) {
-                motor[i] = motor_disarmed[i];
+            if (mixerRuntime.autoCrashflipPreviousMode == CRASHFLIP_PURE) {
+                mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_DEADZONE_FROM_PURE;
+                return CRASHFLIP_DEADZONE_FROM_PURE;
+            } else {
+                mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_DEADZONE_FROM_STABILIZE;
+                return CRASHFLIP_DEADZONE_FROM_STABILIZE;
             }
         }
     }  else {
@@ -406,6 +406,7 @@ static void applyFlipOverAfterCrashModeToMotors(void)
             motor[i] = motor_disarmed[i];
         }
     }
+    return CRASHFLIP_STABILIZE;
 }
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
@@ -558,8 +559,12 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     calculateThrottleAndCurrentMotorEndpoints(currentTimeUs);
     // applyAutoCrashMode();
     if (isFlipOverAfterCrashActive()) {
-        applyFlipOverAfterCrashModeToMotors();
-        return;
+        if (!applyFlipOverAfterCrashModeToMotors()) {
+            autoCrashflipSwitchMotorsToCrashMode(false);
+        } else {
+            autoCrashflipSwitchMotorsToCrashMode(true);
+            return;
+        }
     }
 
     const bool launchControlActive = isLaunchControlActive();

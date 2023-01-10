@@ -495,6 +495,7 @@ void tryArm(void)
         const timeUs_t currentTimeUs = micros();
 
 #ifdef USE_DSHOT
+
         if (currentTimeUs - getLastDshotBeaconCommandTimeUs() < DSHOT_BEACON_GUARD_DELAY_US) {
             if (tryingToArm == ARMING_DELAYED_DISARMED) {
                 if (IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
@@ -608,6 +609,24 @@ void tryArm(void)
                 beeperWarningBeeps(armingDisabledReason);
             }
         }
+    }
+}
+
+void autoCrashflipSwitchMotorsToCrashMode(int crashMode)
+{
+    switch(crashMode) {
+        case 0:
+            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
+            break;
+        case 1:
+            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
+            break;
+        case 2:
+            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
+            break;
+        case 3:
+            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
+            break;
     }
 }
 

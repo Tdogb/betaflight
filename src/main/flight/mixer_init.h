@@ -54,6 +54,7 @@ typedef struct mixerRuntime_s {
     float vbatRangeToCompensate;
 #endif
     float autoCrashflipPreviousMotorOutputs[8];
+    autoCrashFlipMode_e autoCrashflipPreviousMode;
 } mixerRuntime_t;
 
 extern mixerRuntime_t mixerRuntime;
