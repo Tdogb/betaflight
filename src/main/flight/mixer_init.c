@@ -331,6 +331,7 @@ void mixerInitProfile(void)
 
     // Tiny whoop
     mixerRuntime.autoCrashflipPreviousMode = 1;
+    mixerRuntime.normalFlightAfterCrashflip = false;
 }
 
 #ifdef USE_LAUNCH_CONTROL

@@ -354,7 +354,7 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 
 static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void) 
 {
-    if (ARMING_FLAG(ARMED)) {
+    if (ARMING_FLAG(ARMED) && !mixerRuntime.normalFlightAfterCrashflip) {
         float flipPower = mixerConfig()->crashflip_motor_percent / 100.0f;
         // float rightSideUpFlipPower = flipPower / 2.0f;
         float quadVec[3] = {0,0,1};
@@ -363,6 +363,7 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
         float crashflipRoll = quadVec[1];
         float rollCorrection = crashflipRoll;
         float pitchCorrection = crashflipPitch;
+        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, rollCorrection * 100.0f);
         if (ABS(ABS(crashflipRoll) - ABS(crashflipPitch)) > 0.15f) {
             //If far apart then we deactivate one of these
             if (ABS(crashflipRoll) > ABS(crashflipPitch)) {
@@ -371,7 +372,7 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
                 rollCorrection = 0;
             }
         }
-        if (quadVec[2] < 0) {
+        if (quadVec[2] < 0) { // If upside down 
             for (int i = 0; i < mixerRuntime.motorCount; ++i) {
                 float motorOutputNormalised =
                         SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
@@ -383,30 +384,42 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
                 if (mixerConfig()->crashflip_expo < 99) {
                     motor[i] = MIN(mixerConfig()->crashflip_expo * pidGetDT(), mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration);
                 }
-                DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerConfig()->crashflip_expo * pidGetDT() * pidGetPidFrequency());
-                DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, (mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration) * pidGetPidFrequency());
+                // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerConfig()->crashflip_expo * pidGetDT() * pidGetPidFrequency());
+                // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, (mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration) * pidGetPidFrequency());
             }
             mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_PURE;
             return CRASHFLIP_PURE;
-        } else if (ABS(crashflipPitch) > 17.0f/45.0f || ABS(crashflipRoll) > 17.0f/45.0f) {
-            mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_STABILIZE;
-            return CRASHFLIP_STABILIZE;
-        } else {
+        } else if (ABS(crashflipPitch) > 17.0f/45.0f || ABS(crashflipRoll) > 17.0f/45.0f) { // If right side up but not level
+            DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, mixerRuntime.autoCrashflipPreviousMode);
             if (mixerRuntime.autoCrashflipPreviousMode == CRASHFLIP_PURE) {
+                for (int i = 0; i < mixerRuntime.motorCount; i++) {
+                    motor[i] = motor_disarmed[i];
+                }
                 mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_DEADZONE_FROM_PURE;
                 return CRASHFLIP_DEADZONE_FROM_PURE;
             } else {
+                for (int i = 0; i < mixerRuntime.motorCount; i++) {
+                    motor[i] = motor_disarmed[i];
+                }
                 mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_DEADZONE_FROM_STABILIZE;
                 return CRASHFLIP_DEADZONE_FROM_STABILIZE;
             }
+        } else {
+            mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_STABILIZE;
+            mixerRuntime.normalFlightAfterCrashflip = true;
+            return CRASHFLIP_STABILIZE;
         }
+    } else if (mixerRuntime.normalFlightAfterCrashflip && ARMING_FLAG(ARMED)) {
+        return CRASHFLIP_STABILIZE;
     }  else {
         // Disarmed mode
+        mixerRuntime.normalFlightAfterCrashflip = false;
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
+        mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_STABILIZE;
+        return CRASHFLIP_STABILIZE;
     }
-    return CRASHFLIP_STABILIZE;
 }
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
@@ -557,12 +570,11 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
 {
     // Find min and max throttle based on conditions. Throttle has to be known before mixing
     calculateThrottleAndCurrentMotorEndpoints(currentTimeUs);
-    // applyAutoCrashMode();
     if (isFlipOverAfterCrashActive()) {
-        if (!applyFlipOverAfterCrashModeToMotors()) {
-            autoCrashflipSwitchMotorsToCrashMode(false);
-        } else {
-            autoCrashflipSwitchMotorsToCrashMode(true);
+        autoCrashFlipMode_e crashMode = applyFlipOverAfterCrashModeToMotors();
+        autoCrashflipSwitchMotorsToCrashMode(crashMode);
+        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, crashMode);
+        if (crashMode != CRASHFLIP_STABILIZE) { // Must correct behavior when crashflip switch is on and quad is flying
             return;
         }
     }

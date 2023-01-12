@@ -55,6 +55,7 @@ typedef struct mixerRuntime_s {
 #endif
     float autoCrashflipPreviousMotorOutputs[8];
     autoCrashFlipMode_e autoCrashflipPreviousMode;
+    bool normalFlightAfterCrashflip;
 } mixerRuntime_t;
 
 extern mixerRuntime_t mixerRuntime;

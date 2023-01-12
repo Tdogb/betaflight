@@ -155,6 +155,8 @@ static int lastArmingDisabledReason = 0;
 static timeUs_t lastDisarmTimeUs;
 static int tryingToArm = ARMING_DELAYED_DISARMED;
 
+static int lastAutoCrashflipState = 1;
+
 #ifdef USE_RUNAWAY_TAKEOFF
 static timeUs_t runawayTakeoffDeactivateUs = 0;
 static timeUs_t runawayTakeoffAccumulatedUs = 0;
@@ -614,20 +616,14 @@ void tryArm(void)
 
 void autoCrashflipSwitchMotorsToCrashMode(int crashMode)
 {
-    switch(crashMode) {
-        case 0:
-            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
-            break;
-        case 1:
+    if (lastAutoCrashflipState != crashMode) {
+        if (crashMode == 1) {
             dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
-            break;
-        case 2:
-            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
-            break;
-        case 3:
+        } else if (crashMode == 0){
             dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
-            break;
+        }
     }
+    lastAutoCrashflipState = crashMode;
 }
 
 // Automatic ACC Offset Calibration
