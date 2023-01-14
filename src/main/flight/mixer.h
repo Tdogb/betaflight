@@ -98,6 +98,7 @@ typedef struct mixerConfig_s {
     uint8_t crashflip_motor_percent;
     uint8_t crashflip_expo;
     uint8_t mixer_type;
+    uint16_t crashflip_arm_angle_range;
 } mixerConfig_t;
 
 PG_DECLARE(mixerConfig_t, mixerConfig);

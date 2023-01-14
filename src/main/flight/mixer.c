@@ -363,7 +363,6 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
         float crashflipRoll = quadVec[1];
         float rollCorrection = crashflipRoll;
         float pitchCorrection = crashflipPitch;
-        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, rollCorrection * 100.0f);
         if (ABS(ABS(crashflipRoll) - ABS(crashflipPitch)) > 0.15f) {
             //If far apart then we deactivate one of these
             if (ABS(crashflipRoll) > ABS(crashflipPitch)) {
@@ -414,6 +413,7 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
     }  else {
         // Disarmed mode
         mixerRuntime.normalFlightAfterCrashflip = false;
+        DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 2, 69);
         for (int i = 0; i < mixerRuntime.motorCount; i++) {
             motor[i] = motor_disarmed[i];
         }
@@ -577,6 +577,8 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         if (crashMode != CRASHFLIP_STABILIZE) { // Must correct behavior when crashflip switch is on and quad is flying
             return;
         }
+    } else {
+        mixerRuntime.normalFlightAfterCrashflip = false;
     }
 
     const bool launchControlActive = isLaunchControlActive();

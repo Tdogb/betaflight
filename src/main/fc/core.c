@@ -155,7 +155,7 @@ static int lastArmingDisabledReason = 0;
 static timeUs_t lastDisarmTimeUs;
 static int tryingToArm = ARMING_DELAYED_DISARMED;
 
-static int lastAutoCrashflipState = 1;
+static int lastAutoCrashflipState = 255;
 
 #ifdef USE_RUNAWAY_TAKEOFF
 static timeUs_t runawayTakeoffDeactivateUs = 0;
@@ -618,11 +618,20 @@ void autoCrashflipSwitchMotorsToCrashMode(int crashMode)
 {
     if (lastAutoCrashflipState != crashMode) {
         if (crashMode == 1) {
+            // tryArm();
             dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
+            flipOverAfterCrashActive = false;
+            runawayTakeoffCheckDisabled = false;
         } else if (crashMode == 0){
             dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
+            flipOverAfterCrashActive = true;
+            runawayTakeoffCheckDisabled = true;
         }
-    }
+    } 
+    // else if (crashMode == 2 || crashMode == 3) {
+        // This is buzzer stuff
+    //     if (currentTimeUs - getLastDshotBeaconCommandTimeUs() < DSHOT_BEACON_GUARD_DELAY_US)
+    // }
     lastAutoCrashflipState = crashMode;
 }
 
