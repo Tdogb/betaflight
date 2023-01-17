@@ -500,9 +500,17 @@ void tryArm(void)
     if (armingConfig()->gyro_cal_on_first_arm) {
         gyroStartCalibration(true);
     }
+    /**
+     Arned without crashflip switch
+        - Quad is armed normally (tryArm with crashflip switch off)
+    Crashflip switch is still enabled and the quad is rearmed
+        - Arm normally (tryArm with crashflip switch off)
+    Crashflip switch is turned off and back on
+        - When the quad is next armed it will go into auto crashflip mode
+    */
     if (crashflipEnableFlag) {
         crashflipSwitch = IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH);
-        crashflipEnableFlag = false; // Disable crashflip unless we turn this switch off later
+        crashflipEnableFlag = !crashflipSwitch; // enable flag is set to false when we have the crashflip switch on
     } else {
         crashflipSwitch = false;
     }
@@ -667,6 +675,15 @@ void setCrashflipEnableFlag(bool state) {
     crashflipEnableFlag = state;
 }
 
+bool getCrashflipSwitch(void) {
+    return crashflipSwitch;
+}
+
+void updateCrashflipSwitchState(void) {
+    if (!IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
+        setCrashflipEnableFlag(true);
+    }
+}
 
 
 
