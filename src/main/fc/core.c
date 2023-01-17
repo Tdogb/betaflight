@@ -495,6 +495,7 @@ void disarm(flightLogDisarmReason_e reason)
         then it will reset the latch, and allow the next flip of the switch to activate autocrashflip
 
 */
+
 void tryArm(void)
 {
     if (armingConfig()->gyro_cal_on_first_arm) {

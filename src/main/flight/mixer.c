@@ -346,6 +346,51 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 //     }
 // }
 
+static void applyFlipOverAfterCrashModeToMotors(void)
+{
+    if (isFlipOverAfterCrashActive()) {
+        float flipPower = mixerConfig()->crashflip_motor_percent / 100.0f;
+        // float rightSideUpFlipPower = flipPower / 2.0f;
+        float quadVec[3] = {0,0,1};
+        applyMatrixRotation(quadVec, (struct fp_rotationMatrix_s*)rMat);
+        float crashflipPitch = -quadVec[0];
+        float crashflipRoll = quadVec[1];
+        float rollCorrection = crashflipRoll;
+        float pitchCorrection = crashflipPitch;
+        if (ABS(ABS(crashflipRoll) - ABS(crashflipPitch)) > 0.15f) {
+            //If far apart then we deactivate one of these
+            if (ABS(crashflipRoll) > ABS(crashflipPitch)) {
+                pitchCorrection = 0;
+            } else {
+                rollCorrection = 0;
+            }
+        }
+        if (quadVec[2] < 0) { // If upside down 
+            for (int i = 0; i < mixerRuntime.motorCount; ++i) {
+                float motorOutputNormalised =
+                        SIGN(pitchCorrection) * mixerRuntime.currentMixer[i].pitch +
+                        SIGN(rollCorrection) * mixerRuntime.currentMixer[i].roll;
+                motorOutputNormalised = constrainf(flipPower * motorOutputNormalised, 0.0f, 1.0f); //Removes need for some previous code in normal crashflip because no one really needs mixerConfig()->crashflip_motor_percent to ever be > 0
+                float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
+                motor[i] = (motorOutput < motorOutputMin + CRASH_FLIP_DEADBAND) ? mixerRuntime.disarmMotorOutput : (motorOutput - CRASH_FLIP_DEADBAND);
+                // float acceleration = motor[i] - mixerRuntime.autoCrashflipPreviousMotorOutputs[i];
+                // if (mixerConfig()->crashflip_expo < 99) {
+                    // motor[i] = MIN(mixerConfig()->crashflip_expo * pidGetDT(), mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration);
+                // }
+                // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, mixerConfig()->crashflip_expo * pidGetDT() * pidGetPidFrequency());
+                // DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, (mixerRuntime.autoCrashflipPreviousMotorOutputs[i] + acceleration) * pidGetPidFrequency());
+            }
+        } else if (ABS(crashflipPitch) > mixerConfig()->crashflip_arm_angle_range/45.0f || ABS(crashflipRoll) > mixerConfig()->crashflip_arm_angle_range/45.0f) { // If right side up but not level
+            // disarm(DISARM_REASON_AUTO_TURTLE); // This will oscillate between armed and disarmed probably
+            setCrashflipEnableFlag(false);
+        } else {
+            return; //Tryarm should automatically be ran
+        }
+    }
+}
+
+
+
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
     // Now add in the desired throttle, but keep in a range that doesn't clip adjusted
@@ -507,17 +552,11 @@ static void applyMixerAdjustment(float *motorMix, const float motorMixMin, const
 
 */
 
-static void applyFlipOverAfterCrashModeToMotors(void) 
-{
-    
-}
-
-
 FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
 {
     // Find min and max throttle based on conditions. Throttle has to be known before mixing
     calculateThrottleAndCurrentMotorEndpoints(currentTimeUs);
-    updateCrashflipSwitchState();
+    updateCrashflipSwitchState(); //checks to see if we have turned off crashflip switch
     if (getCrashflipSwitch()) {
         applyFlipOverAfterCrashModeToMotors();
 
