@@ -509,9 +509,9 @@ void tryArm(void)
     Crashflip switch is turned off and back on
         - When the quad is next armed it will go into auto crashflip mode
     */
-    if (crashflipEnableFlag) {
+    if (crashflipEnableFlag == CRASHFLIP_ENABLED) {
         crashflipSwitch = IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH);
-        crashflipEnableFlag = !crashflipSwitch; // enable flag is set to false when we have the crashflip switch on
+        crashflipEnableFlag = crashflipSwitch ? CRASHFLIP_; // enable flag is set to false when we have the crashflip switch on
     } else {
         crashflipSwitch = false;
     }
