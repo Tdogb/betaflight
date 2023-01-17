@@ -60,6 +60,15 @@ typedef enum {
 #endif
 } flightLogDisarmReason_e;
 
+typedef enum {
+    AUTOCRASHFLIP_INIT = 0,
+    AUTOCRASHFLIP_PURE = 1,
+    AUTOCRASHFLIP_TRANSITION = 2,
+    AUTOCRASHLIP_FLIGHT = 3,
+    AUTOCRASHFLIP_RC_MODE_ACTIVE = 4,
+    AUTOCRASHFLIP_RC_MODE_INACTIVE = 5,
+} autoCrashflipState_e;
+
 #ifdef USE_LAUNCH_CONTROL
 #define LAUNCH_CONTROL_THROTTLE_TRIGGER_MAX 90
 extern const char * const osdLaunchControlModeNames[LAUNCH_CONTROL_MODE_COUNT];
@@ -84,8 +93,11 @@ bool gyroFilterReady(void);
 bool pidLoopReady(void);
 void taskFiltering(timeUs_t currentTimeUs);
 void taskMainPidLoop(timeUs_t currentTimeUs);
-
 bool isFlipOverAfterCrashActive(void);
+void autoCrashFlipChangeState(autoCrashflipState_e state);
+autoCrashflipState_e getAutoCrashflipState(void);
+bool isCrashflipStateEnabled(void);
+
 int8_t calculateThrottlePercent(void);
 uint8_t calculateThrottlePercentAbs(void);
 bool areSticksActive(uint8_t stickPercentLimit);

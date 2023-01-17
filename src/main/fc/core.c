@@ -148,6 +148,8 @@ int16_t magHold;
 static FAST_DATA_ZERO_INIT uint8_t pidUpdateCounter;
 
 static bool flipOverAfterCrashActive = false;
+static bool crashflipEnableFlag = false;
+static bool crashflipSwitch = false;
 
 static timeUs_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
@@ -317,7 +319,7 @@ void updateArmingStatus(void)
             unsetArmingDisabled(ARMING_DISABLED_THROTTLE);
         }
 
-        if (!isUpright() && !IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
+        if (!isUpright() && !crashflipSwitch) {
             setArmingDisabled(ARMING_DISABLED_ANGLE);
         } else {
             unsetArmingDisabled(ARMING_DISABLED_ANGLE);
@@ -346,7 +348,7 @@ void updateArmingStatus(void)
 #ifdef USE_GPS_RESCUE
         if (gpsRescueIsConfigured()) {
             if (gpsRescueConfig()->allowArmingWithoutFix || (STATE(GPS_FIX) && (gpsSol.numSat >= gpsRescueConfig()->minSats)) ||
-            ARMING_FLAG(WAS_EVER_ARMED) || IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
+            ARMING_FLAG(WAS_EVER_ARMED) || crashflipSwitch) {
                 unsetArmingDisabled(ARMING_DISABLED_GPS);
             } else {
                 setArmingDisabled(ARMING_DISABLED_GPS);
@@ -442,7 +444,7 @@ void disarm(flightLogDisarmReason_e reason)
         lastDisarmTimeUs = micros();
 
 #ifdef USE_OSD
-        if (IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) || isLaunchControlActive()) {
+        if (crashflipSwitch || isLaunchControlActive()) {
             osdSuppressStats(true);
         }
 #endif
@@ -478,11 +480,31 @@ void disarm(flightLogDisarmReason_e reason)
         }
     }
 }
+/* 
+    Arned without crashflip switch
+        - Quad is armed normally (tryArm with crashflip switch off)
+    Crashflip switch is still enabled and the quad is rearmed
+        - Arm normally (tryArm with crashflip switch off)
+    Crashflip switch is turned off and back on
+        - When the quad is next armed it will go into auto crashflip mode
+     Armed with crashflip switch
+        - if upside down then automatically spin motors to flip back up (tryArm with crashflip switch on)
+            - when quad is at specified angle then turn off crashflip (disarm)
+        - if rightside up then arm as if there was no crashflip mode (tryArm with crashflip switch off)
+        - Turning off crashflip switch at any point will not cause anythign to change unless the quad is in the normal armed mode, \
+        then it will reset the latch, and allow the next flip of the switch to activate autocrashflip
 
+*/
 void tryArm(void)
 {
     if (armingConfig()->gyro_cal_on_first_arm) {
         gyroStartCalibration(true);
+    }
+    if (crashflipEnableFlag) {
+        crashflipSwitch = IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH);
+        crashflipEnableFlag = false; // Disable crashflip unless we turn this switch off later
+    } else {
+        crashflipSwitch = false;
     }
 
     updateArmingStatus();
@@ -497,7 +519,7 @@ void tryArm(void)
 #ifdef USE_DSHOT
         if (currentTimeUs - getLastDshotBeaconCommandTimeUs() < DSHOT_BEACON_GUARD_DELAY_US) {
             if (tryingToArm == ARMING_DELAYED_DISARMED) {
-                if (IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH)) {
+                if (crashflipSwitch) {
                     tryingToArm = ARMING_DELAYED_CRASHFLIP;
 #ifdef USE_LAUNCH_CONTROL
                 } else if (canUseLaunchControl()) {
@@ -523,7 +545,7 @@ void tryArm(void)
 
             if (isModeActivationConditionPresent(BOXFLIPOVERAFTERCRASH)) {
                 // Set motor spin direction
-                if (!(IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) || (tryingToArm == ARMING_DELAYED_CRASHFLIP))) {
+                if (!(crashflipSwitch || (tryingToArm == ARMING_DELAYED_CRASHFLIP))) {
                     flipOverAfterCrashActive = false;
                     if (!featureIsEnabled(FEATURE_3D)) {
                         dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
@@ -610,6 +632,43 @@ void tryArm(void)
         }
     }
 }
+
+
+// autoCrashflipState_e currentState = AUTOCRASHFLIP_INIT;
+
+// autoCrashflipState_e autoCrashFlipChangeState(autoCrashflipState_e state) {
+//     if (state == currentState) { return currentState; }
+//     switch (state) {
+//         case AUTOCRASHFLIP_PURE:
+//             tryArm();
+//             break;
+//         case AUTOCRASHFLIP_FLIGHT:
+//             tryArm();
+//             break;
+//         case AUTOCRASHFLIP_TRANSITION:
+//             resetTryingToArm();
+//             disarm();
+//             break;
+//         case AUTOCRASHFLIP_RC_MODE_ACTIVE:
+            
+//             break;
+//     }
+// }
+
+// autoCrashflipState_e getAutoCrashflipState(void) {
+//     return currentState;
+// }
+
+bool getCrashflipEnableFlag(void) {
+    return crashflipEnableFlag;
+}
+
+void setCrashflipEnableFlag(bool state) {
+    crashflipEnableFlag = state;
+}
+
+
+
 
 // Automatic ACC Offset Calibration
 bool AccInflightCalibrationArmed = false;

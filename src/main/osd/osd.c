@@ -1218,7 +1218,7 @@ void osdProcessStats2(timeUs_t currentTimeUs)
         if (cmp32(currentTimeUs, resumeRefreshAt) < 0) {
             // in timeout period, check sticks for activity or CRASH FLIP switch to resume display.
             if (!ARMING_FLAG(ARMED) &&
-                (IS_HI(THROTTLE) || IS_HI(PITCH) || IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH))) {
+                (IS_HI(THROTTLE) || IS_HI(PITCH) || isCrashflipStateEnabled())) {
                 resumeRefreshAt = currentTimeUs;
             }
             return;
