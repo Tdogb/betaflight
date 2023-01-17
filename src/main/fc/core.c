@@ -148,6 +148,7 @@ int16_t magHold;
 static FAST_DATA_ZERO_INIT uint8_t pidUpdateCounter;
 
 static bool flipOverAfterCrashActive = false;
+static bool forceCrashflipOff = false;
 
 static timeUs_t disarmAt;     // Time of automatic disarm when "Don't spin the motors when armed" is enabled and auto_disarm_delay is nonzero
 
@@ -526,7 +527,7 @@ void tryArm(void)
 
             if (isModeActivationConditionPresent(BOXFLIPOVERAFTERCRASH)) {
                 // Set motor spin direction
-                if (!(IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) || (tryingToArm == ARMING_DELAYED_CRASHFLIP))) {
+                if (!((IS_RC_MODE_ACTIVE(BOXFLIPOVERAFTERCRASH) && !forceCrashflipOff) || (tryingToArm == ARMING_DELAYED_CRASHFLIP))) {
                     flipOverAfterCrashActive = false;
                     if (!featureIsEnabled(FEATURE_3D)) {
                         dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
@@ -618,14 +619,22 @@ void autoCrashflipSwitchMotorsToCrashMode(int crashMode)
 {
     if (lastAutoCrashflipState != crashMode) {
         if (crashMode == 1) {
+            forceCrashflipOff = true;
+            tryArm();
             // tryArm();
-            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
-            flipOverAfterCrashActive = false;
-            runawayTakeoffCheckDisabled = false;
+            // dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_NORMAL, DSHOT_CMD_TYPE_INLINE);
+            // flipOverAfterCrashActive = false;
+            // runawayTakeoffCheckDisabled = false;
+        } else if (crashMode == 2 || crashMode == 3) {
+            resetTryingToArm();
+            resetArmingDisabled();
+            disarm(DISARM_REASON_SWITCH);
         } else if (crashMode == 0){
-            dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
-            flipOverAfterCrashActive = true;
-            runawayTakeoffCheckDisabled = true;
+            forceCrashflipOff = false;
+            tryArm();
+            // dshotCommandWrite(ALL_MOTORS, getMotorCount(), DSHOT_CMD_SPIN_DIRECTION_REVERSED, DSHOT_CMD_TYPE_INLINE);
+            // flipOverAfterCrashActive = true;
+            // runawayTakeoffCheckDisabled = true;
         }
     } 
     // else if (crashMode == 2 || crashMode == 3) {

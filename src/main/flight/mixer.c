@@ -388,7 +388,7 @@ static autoCrashFlipMode_e applyFlipOverAfterCrashModeToMotors(void)
             }
             mixerRuntime.autoCrashflipPreviousMode = CRASHFLIP_PURE;
             return CRASHFLIP_PURE;
-        } else if (ABS(crashflipPitch) > 17.0f/45.0f || ABS(crashflipRoll) > 17.0f/45.0f) { // If right side up but not level
+        } else if (ABS(crashflipPitch) > mixerConfig()->crashflip_arm_angle_range/45.0f || ABS(crashflipRoll) > mixerConfig()->crashflip_arm_angle_range/45.0f) { // If right side up but not level
             DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 1, mixerRuntime.autoCrashflipPreviousMode);
             if (mixerRuntime.autoCrashflipPreviousMode == CRASHFLIP_PURE) {
                 for (int i = 0; i < mixerRuntime.motorCount; i++) {
@@ -574,7 +574,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         autoCrashFlipMode_e crashMode = applyFlipOverAfterCrashModeToMotors();
         autoCrashflipSwitchMotorsToCrashMode(crashMode);
         DEBUG_SET(DEBUG_AUTO_CRASHFLIP, 0, crashMode);
-        if (crashMode != CRASHFLIP_STABILIZE) { // Must correct behavior when crashflip switch is on and quad is flying
+        if (crashMode == CRASHFLIP_PURE) { // Must correct behavior when crashflip switch is on and quad is flying
             return;
         }
     } else {
