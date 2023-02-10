@@ -51,7 +51,7 @@
 #define USE_DSHOT_TELEMETRY
 #define USE_DSHOT_TELEMETRY_STATS
 #define USE_RPM_FILTER
-#define USE_DYN_IDLE
+// #define USE_DYN_IDLE
 #define USE_DYN_NOTCH_FILTER
 #define USE_ADC_INTERNAL
 #define USE_USB_CDC_HID
@@ -382,10 +382,10 @@ extern uint8_t _dmaram_end__;
 #define USE_AIRMODE_LPF
 #define USE_CANVAS
 #define USE_FRSKYOSD
-#define USE_GPS
-#define USE_GPS_NMEA
-#define USE_GPS_UBLOX
-#define USE_GPS_RESCUE
+// #define USE_GPS
+// #define USE_GPS_NMEA
+// #define USE_GPS_UBLOX
+// #define USE_GPS_RESCUE
 #define USE_GYRO_DLPF_EXPERIMENTAL
 #define USE_OSD
 #define USE_OSD_OVER_MSP_DISPLAYPORT
@@ -408,7 +408,7 @@ extern uint8_t _dmaram_end__;
 #define USE_OSD_PROFILES
 #define USE_OSD_STICK_OVERLAY
 #define USE_CMS_FAILSAFE_MENU
-#define USE_CMS_GPS_RESCUE_MENU
+// #define USE_CMS_GPS_RESCUE_MENU
 #define USE_TELEMETRY_SENSORS_DISABLED_DETAILS
 #define USE_VTX_TABLE
 #define USE_PERSISTENT_STATS
@@ -429,5 +429,5 @@ extern uint8_t _dmaram_end__;
 #define USE_DASHBOARD
 #define USE_EMFAT_AUTORUN
 #define USE_EMFAT_ICON
-#define USE_GPS_PLUS_CODES
+// #define USE_GPS_PLUS_CODES
 #endif
