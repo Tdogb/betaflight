@@ -18,12 +18,26 @@
  * If not, see <http://www.gnu.org/licenses/>.
  */
 
-// Touch up configuration
-
 #pragma once
 
 #include "build/version.h"
 
+/*
+
+    The purpose of this file is to enable / disable any firmware "gates" for features and drivers
+    that require hardware resources that are either available or not available after the target.h
+    has been processed.
+
+    It should also be used to define anything that should be defined (and is required), but is not
+    already, to some sort of defaults.
+
+    CLOUD_BUILD and CORE_BUILD should not be referenced here.
+
+    NOTE: for 4.5 we will be removing any conditions related to specific MCU types, instead 
+    these should be defined in the target.h or in a file that is imported by target.h (in the
+    case of common settings for a given MCU group)
+    
+*/
 
 /*
     BEGIN HARDWARE INCLUSIONS
@@ -44,40 +58,29 @@
 #define USE_MAG_AK8975
 #endif
 
-#if defined(USE_BARO) && !defined(USE_FAKE_BARO)
-#define USE_BARO_MS5611
-#define USE_BARO_SPI_MS5611
-#define USE_BARO_BMP280
-#define USE_BARO_SPI_BMP280
-#define USE_BARO_BMP388
-#define USE_BARO_SPI_BMP388
-#define USE_BARO_LPS
-#define USE_BARO_SPI_LPS
-#define USE_BARO_QMP6988
-#define USE_BARO_SPI_QMP6988
-#define USE_BARO_DPS310
-#define USE_BARO_SPI_DPS310
-#define USE_BARO_BMP085
-#endif
-
 #if defined(USE_RX_CC2500)
 
-#define USE_RX_FRSKY_SPI_D
-#define USE_RX_FRSKY_SPI_X
-#define USE_RX_SFHSS_SPI
-#define USE_RX_REDPINE_SPI
-#define USE_RX_FRSKY_SPI_TELEMETRY
+#if !defined(USE_RX_SPI)
+#define USE_RX_SPI
+#endif
+
 #define USE_RX_CC2500_SPI_PA_LNA
 #define USE_RX_CC2500_SPI_DIVERSITY
 
+#define USE_RX_SFHSS_SPI
+#define USE_RX_REDPINE_SPI
+
+#define USE_RX_FRSKY_SPI_D
+#define USE_RX_FRSKY_SPI_X
+#define USE_RX_FRSKY_SPI
+#define USE_RX_FRSKY_SPI_TELEMETRY
+
 #define USE_RX_FLYSKY
 #define USE_RX_FLYSKY_SPI_LED
-
 #define USE_RX_SPEKTRUM
 #define USE_RX_SPEKTRUM_TELEMETRY
 
 #endif // defined(USE_RX_CC2500)
-
 
 /* END HARDWARE INCLUSIONS */
 
@@ -146,7 +149,10 @@
 #undef USE_TELEMETRY_MAVLINK
 #undef USE_TELEMETRY_SMARTPORT
 #undef USE_TELEMETRY_SRXL
-#undef USE_SERIALRX_FPORT
+
+#ifdef USE_SERIALRX_FPORT
+#define USE_TELEMETRY
+#endif
 #endif
 
 #if !defined(USE_SERIALRX_CRSF)
@@ -199,7 +205,7 @@
 #define USE_SBUS_CHANNELS
 #endif
 
-#if !defined(USE_TELEMETRY_SMARTPORT) && !defined(USE_TELEMETRY_CRSF)
+#if !defined(USE_TELEMETRY_SMARTPORT) && !defined(USE_TELEMETRY_CRSF) && !defined(USE_TELEMETRY_GHST)
 #undef USE_MSP_OVER_TELEMETRY
 #endif
 
@@ -215,23 +221,6 @@
 #undef USE_VTX_SMARTAUDIO
 #undef USE_VTX_TABLE
 #undef USE_VTX_MSP
-#endif
-
-#if defined(USE_RX_FRSKY_SPI_D) || defined(USE_RX_FRSKY_SPI_X) || defined(USE_RX_REDPINE_SPI)
-#define USE_RX_CC2500
-#define USE_RX_FRSKY_SPI
-#endif
-
-#if defined(USE_RX_SFHSS_SPI)
-#define USE_RX_CC2500
-#endif
-
-#if !defined(USE_RX_CC2500)
-#undef USE_RX_CC2500_SPI_PA_LNA
-#endif
-
-#if !defined(USE_RX_CC2500_SPI_PA_LNA)
-#undef USE_RX_CC2500_SPI_DIVERSITY
 #endif
 
 // Burst dshot to default off if not configured explicitly by target
@@ -294,6 +283,20 @@
 #undef USE_RX_LINK_UPLINK_POWER
 #endif
 
+// Older ACC/GYRO sensors use MPU6500 driver
+#if !defined(USE_ACC_MPU6500) && (defined(USE_ACC_ICM20601) || defined(USE_ACC_ICM20602) || defined(USE_ACC_ICM20608G))
+#define USE_ACC_MPU6500
+#endif
+#if !defined(USE_ACC_SPI_MPU6500) && (defined(USE_ACC_SPI_ICM20601) || defined(USE_ACC_SPI_ICM20602) || defined(USE_ACC_SPI_ICM20608G))
+#define USE_ACC_SPI_MPU6500
+#endif
+#if !defined(USE_GYRO_MPU6500) && (defined(USE_GYRO_ICM20601) || defined(USE_GYRO_ICM20602) || defined(USE_GYRO_ICM20608G))
+#define USE_GYRO_MPU6500
+#endif
+#if !defined(USE_GYRO_SPI_MPU6500) && (defined(USE_GYRO_SPI_ICM20601) || defined(USE_GYRO_SPI_ICM20602) || defined(USE_GYRO_SPI_ICM20608G))
+#define USE_GYRO_SPI_MPU6500
+#endif
+
 // Generate USE_SPI_GYRO or USE_I2C_GYRO
 #if defined(USE_GYRO_L3G4200D) || defined(USE_GYRO_MPU3050) || defined(USE_GYRO_MPU6000) || defined(USE_GYRO_MPU6050) || defined(USE_GYRO_MPU6500)
 #define USE_I2C_GYRO
@@ -333,20 +336,25 @@
 #if !defined(USE_SERIAL_4WAY_BLHELI_BOOTLOADER) && !defined(USE_SERIAL_4WAY_SK_BOOTLOADER)
 #undef  USE_SERIAL_4WAY_BLHELI_INTERFACE
 #elif !defined(USE_SERIAL_4WAY_BLHELI_INTERFACE) && (defined(USE_SERIAL_4WAY_BLHELI_BOOTLOADER) || defined(USE_SERIAL_4WAY_SK_BOOTLOADER))
+#ifndef USE_SERIAL_4WAY_BLHELI_INTERFACE
 #define USE_SERIAL_4WAY_BLHELI_INTERFACE
 #endif
-
-
-#if defined(USE_PWM) || defined(USE_DSHOT) || defined(USE_LED_STRIP) || defined(USE_TRANSPONDER) || defined(USE_BEEPER)
-#define USE_PWM_OUTPUT
 #endif
 
-#if !defined(USE_PWM_OUTPUT)
-#undef USE_SERIAL_4WAY_BLHELI_INTERFACE // implementation requires USE_PWM_OUTPUT to find motor outputs.
+#if defined(USE_RX_PWM) || defined(USE_DSHOT) || defined(USE_LED_STRIP) || defined(USE_TRANSPONDER) || defined(USE_BEEPER) || defined(USE_SERIAL_4WAY_BLHELI_INTERFACE)
+#ifndef USE_PWM_OUTPUT
+#define USE_PWM_OUTPUT
+#endif
 #endif
 
 #if !defined(USE_LED_STRIP)
 #undef USE_LED_STRIP_STATUS_MODE
+#endif
+
+#if defined(USE_MAX7456) || defined(USE_FRSKYOSD) || defined(USE_MSP_DISPLAYPORT)
+#ifndef USE_VIDEO_SYSTEM
+#define USE_VIDEO_SYSTEM
+#endif
 #endif
 
 #if defined(USE_LED_STRIP) && !defined(USE_LED_STRIP_STATUS_MODE)
@@ -390,13 +398,9 @@
 #undef BEEPER_PWM_HZ
 #endif
 
-#if defined(USE_DSHOT) || defined(USE_LED_STRIP) || defined(USE_TRANSPONDER)
+#if defined(USE_DMA_SPEC)
 #define USE_TIMER_DMA
 #else
-#undef USE_DMA_SPEC
-#endif
-
-#if !defined(USE_DMA_SPEC)
 #undef USE_TIMER_MGMT
 #endif
 
@@ -455,7 +459,26 @@ extern uint8_t __config_end;
 
 #if defined(USE_RX_EXPRESSLRS) && defined(STM32F411)
 #define RX_SPI_DEFAULT_PROTOCOL          RX_SPI_EXPRESSLRS
+#endif
+
+#if defined(USE_RX_EXPRESSLRS) && !defined(RX_EXPRESSLRS_TIMER_INSTANCE) && (defined(STM32F411) || defined(STM32F405) || defined(STM32F745) || defined(STM32H7))
 #define RX_EXPRESSLRS_TIMER_INSTANCE     TIM5
+#endif
+
+#if defined(USE_RX_EXPRESSLRS)
+// ELRS depends on CRSF telemetry
+#if !defined(USE_TELEMETRY)
+#define USE_TELEMETRY
+#endif
+#if !defined(USE_TELEMETRY_CRSF)
+#define USE_TELEMETRY_CRSF
+#endif
+#if !defined(USE_CRSF_LINK_STATISTICS)
+#define USE_CRSF_LINK_STATISTICS
+#endif
+#if !defined(USE_SERIALRX_CRSF)
+#define USE_SERIALRX_CRSF
+#endif
 #endif
 
 #if defined(USE_RX_SPI) || defined (USE_SERIALRX_SRXL2)

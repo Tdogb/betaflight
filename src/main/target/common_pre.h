@@ -20,6 +20,27 @@
 
 #pragma once
 
+/*
+
+    The purpose of this file is to enable the firmware "gates" for features and drivers
+    prior to entering the target.h.
+
+    CLOUD_BUILD is used to signify that the build is a user requested build and that the 
+    features to be enabled will be defined ALREADY.
+
+    CORE_BUILD is used to signify that the build is a user requested build and that the 
+    features to be enabled will be the minimal set, and all the drivers should be present.
+
+    If neither of the above are present then the build should simply be a baseline build 
+    for continuous integration, i.e. the compilation of the majority of features and drivers
+    dependent on the size of the flash available.
+
+    NOTE: for 4.5 we will be removing any conditions related to specific MCU types, instead 
+    these should be defined in the target.h or in a file that is imported by target.h (in the
+    case of common settings for a given MCU group)
+
+*/
+
 #define USE_PARAMETER_GROUPS
 // type conversion warnings.
 // -Wconversion can be turned on to enable the process of eliminating these warnings
@@ -233,11 +254,32 @@ extern uint8_t _dmaram_end__;
 #define USE_GYRO_REGISTER_DUMP  // Adds gyroregisters command to cli to dump configured register values
 #define USE_IMU_CALC
 
+// all the settings for classic build
 #if !defined(CLOUD_BUILD) && !defined(SITL)
 
 #define USE_MAG
+
+#if !defined(USE_BARO) && !defined(USE_FAKE_BARO)
 #define USE_BARO
 
+#define USE_BARO_MS5611
+#define USE_BARO_SPI_MS5611
+#define USE_BARO_BMP280
+#define USE_BARO_SPI_BMP280
+#define USE_BARO_BMP388
+#define USE_BARO_SPI_BMP388
+#define USE_BARO_LPS
+#define USE_BARO_SPI_LPS
+#define USE_BARO_QMP6988
+#define USE_BARO_SPI_QMP6988
+#define USE_BARO_DPS310
+#define USE_BARO_SPI_DPS310
+#define USE_BARO_BMP085
+#define USE_BARO_2SMBP_02B
+#define USE_BARO_SPI_2SMBP_02B
+#endif
+
+#if !defined(USE_GYRO) && !defined(USE_ACC)
 #define USE_ACC
 #define USE_GYRO
 
@@ -261,22 +303,37 @@ extern uint8_t _dmaram_end__;
 #define USE_GYRO_MPU6050
 #define USE_ACCGYRO_BMI160
 #endif
+#endif
 
+#if !defined(USE_EXST) && !defined(USE_FLASH)
 #define USE_FLASHFS
+
 #define USE_FLASH_TOOLS
 #define USE_FLASH_M25P16
-#define USE_FLASH_W25N01G          // 1Gb NAND flash support
-#define USE_FLASH_W25M             // Stacked die support
-#define USE_FLASH_W25M512          // 512Kb (256Kb x 2 stacked) NOR flash support
-#define USE_FLASH_W25M02G          // 2Gb (1Gb x 2 stacked) NAND flash support
-#define USE_FLASH_W25Q128FV        // 16MB Winbond 25Q128
+#define USE_FLASH_W25N01G    // 1Gb NAND flash support
+#define USE_FLASH_W25M       // Stacked die support
+#define USE_FLASH_W25M512    // 512Kb (256Kb x 2 stacked) NOR flash support
+#define USE_FLASH_W25M02G    // 2Gb (1Gb x 2 stacked) NAND flash support
+#define USE_FLASH_W25Q128FV  // 16MB Winbond 25Q128
 
+#endif
+
+#ifndef USE_MAX7456
 #define USE_MAX7456
+#endif
 
+#if !defined(USE_RX_SPI)
 #define USE_RX_SPI
-#define USE_RX_CC2500
 
+#define USE_RX_CC2500
+#define USE_RX_EXPRESSLRS
+#define USE_RX_SX1280
+#define USE_RX_SX127X
+#endif // !USE_RX_SPI
+
+#if !defined(USE_EXST) && !defined(USE_SDCARD)
 #define USE_SDCARD
+#endif
 
 #if defined(STM32F405) || defined(STM32F745) || defined(STM32H7)
 #define USE_VTX_RTC6705
@@ -287,19 +344,16 @@ extern uint8_t _dmaram_end__;
 #define USE_RANGEFINDER
 #define USE_RANGEFINDER_HCSR04
 #define USE_RANGEFINDER_TF
-
-#define USE_RX_EXPRESSLRS
-#define RX_EXPRESSLRS_TIMER_INSTANCE     TIM5
-#define USE_RX_SX1280
-#define USE_RX_SX127X
 #endif
 
-#define USE_PPM
+#define USE_RX_PPM
+#define USE_RX_PWM
 
 #define USE_BRUSHED_ESC_AUTODETECT  // Detect if brushed motors are connected and set defaults appropriately to avoid motors spinning on boot
-#define USE_PWM
 
 #define USE_PINIO
+
+#if !defined(USE_SERIAL_RX)
 
 #define USE_SERIALRX
 #define USE_SERIALRX_CRSF       // Team Black Sheep Crossfire protocol
@@ -307,44 +361,86 @@ extern uint8_t _dmaram_end__;
 #define USE_SERIALRX_IBUS       // FlySky and Turnigy receivers
 #define USE_SERIALRX_SBUS       // Frsky and Futaba receivers
 #define USE_SERIALRX_SPEKTRUM   // SRXL, DSM2 and DSMX protocol
-#define USE_SERIALRX_SUMD       // Graupner Hott protocol
+#define USE_SERIALRX_FPORT      // FrSky FPort
+#define USE_SERIALRX_XBUS       // JR
+#define USE_SERIALRX_SRXL2      // Spektrum SRXL2 protocol
+
+#endif // !defined(USE_SERIAL_RX)
+
+#if !defined(USE_TELEMETRY)
 #define USE_TELEMETRY
+
 #define USE_TELEMETRY_FRSKY_HUB
 #define USE_TELEMETRY_SMARTPORT
-#define USE_SERIALRX_FPORT      // FrSky FPort
 #define USE_TELEMETRY_CRSF
 #define USE_TELEMETRY_GHST
 #define USE_TELEMETRY_SRXL
 
+#endif // !defined(USE_TELEMETRY)
+
 #define USE_SERVOS
 
 #define USE_VTX
+#define USE_OSD
+#define USE_OSD_SD
+#define USE_OSD_HD
+#define USE_BLACKBOX
 
-#define USE_TELEMETRY_HOTT
-#define USE_TELEMETRY_LTM
-#define USE_SERIALRX_SUMH       // Graupner legacy protocol
-#define USE_SERIALRX_XBUS       // JR
-#define USE_CRSF_CMS_TELEMETRY
-#define USE_CRSF_LINK_STATISTICS
+#if TARGET_FLASH_SIZE > 512
+
+#if defined(USE_SERIALRX)
 
 #define USE_SERIALRX_JETIEXBUS
+#define USE_SERIALRX_SUMD       // Graupner Hott protocol
+#define USE_SERIALRX_SUMH       // Graupner legacy protocol
+
+#endif // USE_SERIALRX
+
+#if defined(USE_TELEMETRY)
+
 #define USE_TELEMETRY_IBUS
 #define USE_TELEMETRY_IBUS_EXTENDED
 #define USE_TELEMETRY_JETIEXBUS
 #define USE_TELEMETRY_MAVLINK
-#define USE_SERIALRX_SRXL2     // Spektrum SRXL2 protocol
+#define USE_TELEMETRY_HOTT
+#define USE_TELEMETRY_LTM
 
+#endif // USE_TELEMETRY
+
+#define USE_BATTERY_CONTINUE
+#define USE_DASHBOARD
+#define USE_EMFAT_AUTORUN
+#define USE_EMFAT_ICON
+#define USE_ESCSERIAL_SIMONK
 #define USE_GPS
-#define USE_OSD
+#define USE_GPS_PLUS_CODES
 #define USE_LED_STRIP
+#define USE_SERIAL_4WAY_SK_BOOTLOADER
+#endif
 
 #endif // !defined(CLOUD_BUILD)
+
+#if !defined(LED_MAX_STRIP_LENGTH)
+#ifdef USE_LEDSTRIP_64
+#define LED_MAX_STRIP_LENGTH           64
+#else
+#define LED_MAX_STRIP_LENGTH           32
+#endif
+#endif // # !defined(LED_MAX_STRIP_LENGTH)
+
+#if defined(USE_LED_STRIP)
+#define USE_LED_STRIP_STATUS_MODE
+#endif
 
 #if defined(USE_SDCARD)
 #define USE_SDCARD_SPI
 #if defined(STM32F4) || defined(STM32F7) || defined(STM32H7)
 #define USE_SDCARD_SDIO
 #endif
+#endif
+
+#if (defined(USE_SDCARD) || defined(USE_FLASH)) && !defined(USE_BLACKBOX)
+#define USE_BLACKBOX
 #endif
 
 #if defined(USE_PINIO)
@@ -359,17 +455,16 @@ extern uint8_t _dmaram_end__;
 #define USE_VTX_TRAMP
 #define USE_VTX_MSP
 #define USE_VTX_TABLE
-#endif
+#endif // USE_VTX
 
 #define USE_HUFFMAN
 
 #define PID_PROFILE_COUNT 4
 #define CONTROL_RATE_PROFILE_COUNT  4
 
-#define USE_ACRO_TRAINER
-#define USE_BLACKBOX
 #define USE_CLI_BATCH
 #define USE_RESOURCE_MGMT
+
 #define USE_RUNAWAY_TAKEOFF     // Runaway Takeoff Prevention (anti-taz)
 
 #define USE_GYRO_OVERFLOW_CHECK
@@ -379,19 +474,14 @@ extern uint8_t _dmaram_end__;
 #define USE_DSHOT_DMAR
 #endif
 
-#define USE_CMS
-#define USE_MSP_DISPLAYPORT
 #define USE_MSP_OVER_TELEMETRY
-#define USE_OSD_OVER_MSP_DISPLAYPORT
 
 #define USE_VIRTUAL_CURRENT_METER
-#define USE_CAMERA_CONTROL
 #define USE_ESC_SENSOR
 #define USE_SERIAL_4WAY_BLHELI_BOOTLOADER
 #define USE_RCDEVICE
 
 #define USE_GYRO_LPF2
-#define USE_LAUNCH_CONTROL
 #define USE_DYN_LPF
 #define USE_D_MIN
 
@@ -412,10 +502,9 @@ extern uint8_t _dmaram_end__;
 #define USE_SPEKTRUM_VTX_CONTROL
 #define USE_SPEKTRUM_VTX_TELEMETRY
 #define USE_SPEKTRUM_CMS_TELEMETRY
-#endif
+#endif // USE_SERIALRX_SPEKTRUM
 
 #define USE_BOARD_INFO
-#define USE_EXTENDED_CMS_MENUS
 #define USE_RTC_TIME
 #define USE_ESC_SENSOR_INFO
 
@@ -427,8 +516,6 @@ extern uint8_t _dmaram_end__;
 #define USE_RX_LINK_UPLINK_POWER
 
 #define USE_AIRMODE_LPF
-#define USE_CANVAS
-#define USE_FRSKYOSD
 #define USE_GYRO_DLPF_EXPERIMENTAL
 #define USE_MULTI_GYRO
 #define USE_SENSOR_NAMES
@@ -436,11 +523,7 @@ extern uint8_t _dmaram_end__;
 #define USE_SIGNATURE
 #define USE_ABSOLUTE_CONTROL
 #define USE_HOTT_TEXTMODE
-#define USE_LED_STRIP_STATUS_MODE
-#define USE_VARIO
 #define USE_ESC_SENSOR_TELEMETRY
-#define USE_CMS_FAILSAFE_MENU
-#define USE_CMS_GPS_RESCUE_MENU
 #define USE_TELEMETRY_SENSORS_DISABLED_DETAILS
 #define USE_PERSISTENT_STATS
 #define USE_PROFILE_NAMES
@@ -448,49 +531,70 @@ extern uint8_t _dmaram_end__;
 #define USE_CUSTOM_BOX_NAMES
 #define USE_BATTERY_VOLTAGE_SAG_COMPENSATION
 #define USE_SIMPLIFIED_TUNING
-#define USE_CRSF_V3
 #define USE_RPM_LIMITER
 #define USE_CRAFTNAME_MSGS
+
+#if !defined(CORE_BUILD)
+// CORE_BUILD is only hardware drivers, and the bare minimum
+// any thing defined here will be in the standard (git hub actions)
+// builds or included in CLOUD_BUILD by default.
+
+#if !defined(USE_LAUNCH_CONTROL)
+#define USE_LAUNCH_CONTROL
+#endif
+
+#endif // !defined(CORE_BUILD)
 
 #ifdef USE_GPS
 #define USE_GPS_NMEA
 #define USE_GPS_UBLOX
 #define USE_GPS_RESCUE
+#endif // USE_GPS
+
+
+#if (defined(USE_OSD_HD) || defined(USE_OSD_SD)) && !defined(USE_OSD)
+// If either USE_OSD_SD for USE_OSD_HD are defined, ensure that USE_OSD is also defined
+#define USE_OSD
 #endif
 
-#ifdef USE_OSD
+
+#if defined(USE_OSD)
+
+#if !defined(USE_OSD_HD) && !defined(USE_OSD_SD)
+// If USE_OSD is defined without specifying SD or HD, then support both
+#define USE_OSD_SD
+#define USE_OSD_HD
+#endif
+
+#if !defined(USE_OSD_SD) && defined(USE_MAX7456)
+// If USE_OSD_SD isn't defined then explicitly exclude MAX7456 support
+#undef USE_MAX7456
+#endif
+
+#define USE_CANVAS
+#define USE_CMS
+#define USE_CMS_FAILSAFE_MENU
+#define USE_EXTENDED_CMS_MENUS
+#define USE_MSP_DISPLAYPORT
 #define USE_OSD_OVER_MSP_DISPLAYPORT
 #define USE_OSD_ADJUSTMENTS
 #define USE_OSD_PROFILES
 #define USE_OSD_STICK_OVERLAY
+
+#if defined(USE_GPS)
+#define USE_CMS_GPS_RESCUE_MENU
 #endif
 
-#if (TARGET_FLASH_SIZE > 512)
+#endif // defined(USE_OSD)
 
-#define USE_ESCSERIAL_SIMONK
-#define USE_SERIAL_4WAY_SK_BOOTLOADER
-#define USE_DASHBOARD
-#define USE_EMFAT_AUTORUN
-#define USE_EMFAT_ICON
-#define USE_BATTERY_CONTINUE
 
-#if !defined(CLOUD_BUILD)
-#define USE_GPS_PLUS_CODES
-#endif
+#if defined(USE_SERIALRX_CRSF)
 
-#endif
+#define USE_CRSF_V3
 
-#if defined(CLOUD_BUILD)
-
-// Handle the CRSF co-dependency requirements
-#if defined(USE_TELEMETRY_CRSF) 
-
-// if both CRSF and CMS then enable CMS telemtry and link statistics
-#if defined(USE_CMS)
+#if defined(USE_TELEMETRY_CRSF) && defined(USE_CMS)
 #define USE_CRSF_CMS_TELEMETRY
 #define USE_CRSF_LINK_STATISTICS
-#endif 
-
-#endif // CRSF co-dependency requirements.
-
 #endif
+
+#endif // defined(USE_SERIALRX_CRSF)
