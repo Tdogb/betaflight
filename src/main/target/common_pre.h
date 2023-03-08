@@ -531,6 +531,7 @@ extern uint8_t _dmaram_end__;
 #define USE_CUSTOM_BOX_NAMES
 #define USE_BATTERY_VOLTAGE_SAG_COMPENSATION
 #define USE_SIMPLIFIED_TUNING
+#define USE_CRSF_V3
 #define USE_RPM_LIMITER
 #define USE_CRAFTNAME_MSGS
 
