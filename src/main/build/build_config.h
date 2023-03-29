@@ -38,6 +38,10 @@
 #define REQUIRE_PRINTF_LONG_SUPPORT
 #endif
 
+#ifndef USE_RPM_LIMITER
+#define USE_RPM_LIMITER
+#endif
+
 // MCU type IDs.
 // IDs are permanent as they have a dependency to configurator through MSP reporting
 

@@ -374,8 +374,8 @@ static uint32_t getDshotMaxRPM(void)
 static void applyRPMLimiter(mixerRuntime_t *mixer)
 {
     if (RPM_LIMIT_ACTIVE && motorConfig()->dev.useDshotTelemetry && ARMING_FLAG(ARMED)) {
-        float rpm = mixerConfig()->rpmLimiterUseMaxRPM ? getDshotMaxRPM() / 10.0f : getDshotAverageRpm() / 10.0f;
-        float rpmSmoothed = pt1FilterApply(&mixer->rpmFilter, rpm);
+        float rpm = mixerConfig()->use_max_rpm ? getDshotMaxRPM() / 10.0f : getDshotAverageRpm() / 10.0f;
+        float rpmSmoothed = pt1FilterApply(&mixer->averageRPMFilter, rpm);
         float smoothedRPMError = rpmSmoothed - mixer->rpmLimiterRPMLimit;
         // PID
         float rpmLimiterP = smoothedRPMError * mixer->rpmLimiterPGain;
@@ -391,14 +391,14 @@ static void applyRPMLimiter(mixerRuntime_t *mixer)
             mixer->rpmLimiterExpectedThrottleLimit *= 1.0f + 3.2f / pidGetPidFrequency();
         }
         mixer->rpmLimiterExpectedThrottleLimit = constrainf(mixer->rpmLimiterExpectedThrottleLimit, 0.01f, 1.0f);
-        if (mixerConfig()->rpmLimiterUseMaxRPM) {
+        if (mixerConfig()->use_max_rpm) {
             motorRangeMax *= mixer->rpmLimiterExpectedThrottleLimit;
         } else {
             throttle *= mixer->rpmLimiterExpectedThrottleLimit;
         }
         // Output
         pidOutput = MAX(0.0f, pidOutput);
-        if (mixerConfig()->rpmLimiterUseMaxRPM) {
+        if (mixerConfig()->use_max_rpm) {
             motorRangeMax = constrainf(motorRangeMax-pidOutput, 0.0f, 1.0f);
         } else {
             throttle = constrainf(throttle-pidOutput, 0.0f, 1.0f);

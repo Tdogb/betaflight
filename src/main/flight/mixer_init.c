@@ -59,6 +59,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .rpm_limiter_d = 8,
     .rpm_limiter_rpm_limit = 0,
     .motor_kv = 1960,
+    .use_max_rpm = false,
 );
 
 PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR_MIXER, 0);
