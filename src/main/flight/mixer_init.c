@@ -340,7 +340,7 @@ void mixerInitProfile(void)
     mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 100.0f;
     mixerRuntime.rpmLimiterIdleRPM = mixerConfig()->rpm_limiter_idle_rpm * 100.0f;
     mixerRuntime.maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv);
-    mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs); //0.0002
+    mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / mixerRuntime.maxExpectedRPMs); //0.0002
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.000015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.001f * pidGetDT();
     mixerRuntime.rpmLimiterDGain = mixerConfig()->rpm_limiter_d * 0.0000003f * pidGetPidFrequency();
