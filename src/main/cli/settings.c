@@ -943,6 +943,7 @@ const clivalue_t valueTable[] = {
     { "rpm_limit_d",                VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 100 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, rpm_limiter_d) },
     { "rpm_limit",                  VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, rpm_limiter_rpm_limit) },
     { "rpm_limit_motor_kv",         VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 1, 40000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, motor_kv) },
+    { "rpm_limit_accel_limit",                VAR_UINT16 |  MASTER_VALUE,  .config.minmaxUnsigned = { 0, 10000 }, PG_MIXER_CONFIG, offsetof(mixerConfig_t, rpm_limiter_accel_limit) },
     { "rpm_limiter_use_max_rpm",           VAR_UINT8 | MASTER_VALUE | MODE_LOOKUP, .config.lookup = { TABLE_OFF_ON }, PG_MOTOR_3D_CONFIG, offsetof(mixerConfig_t, use_max_rpm) },
 #endif
 

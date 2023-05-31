@@ -59,6 +59,7 @@
 #define USE_DSHOT_TELEMETRY_STATS
 #endif
 
+#define USE_RPM_LIMIT
 #define USE_MOTOR
 #define USE_DMA
 #define USE_TIMER

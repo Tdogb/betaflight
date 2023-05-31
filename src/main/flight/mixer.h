@@ -96,6 +96,7 @@ typedef struct mixerConfig_s {
     uint16_t rpm_limiter_rpm_limit;
     uint16_t motor_kv;
     uint8_t mixer_type;
+    uint16_t rpm_limiter_accel_limit;
     bool use_max_rpm;
 } mixerConfig_t;
 

@@ -80,6 +80,8 @@ float motor_disarmed[MAX_SUPPORTED_MOTORS];
 
 static FAST_DATA_ZERO_INIT int throttleAngleCorrection;
 
+static float prevMotorOutput[MAX_SUPPORTED_MOTORS];
+
 float getMotorMixRange(void)
 {
     return motorMixRange;
@@ -406,8 +408,8 @@ static void applyRPMLimiter(mixerRuntime_t *mixer)
         mixer->rpmLimiterPreviousSmoothedRPMError = smoothedRPMError;
         DEBUG_SET(DEBUG_RPM_LIMITER, 0, smoothedRPMError);
         DEBUG_SET(DEBUG_RPM_LIMITER, 1, throttle * 100.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixer->rpmLimiterI * 100.0f);
-        DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpmLimiterD * 100.0f);
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 2, mixer->rpmLimiterI * 100.0f);
+        // DEBUG_SET(DEBUG_RPM_LIMITER, 3, rpmLimiterD * 100.0f);
     }
 }
 
@@ -439,7 +441,20 @@ static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t 
 #endif
             motorOutput = constrainf(motorOutput, mixerRuntime.disarmMotorOutput, motorRangeMax);
         } else {
+            float motorDelta = motorOutput-prevMotorOutput[i];
+            DEBUG_SET(DEBUG_RPM_LIMITER, 2, motorOutput * 100.0f);
+
+            if (!(motor[i] == motor_disarmed[i])) {
+                if (ABS(motorDelta) > mixerRuntime.rpmLimiterAccelLimit) {
+                    if (motorDelta > 0) {
+                        // motorOutput = prevMotorOutput[i] - mixerRuntime.rpmLimiterAccelLimit;
+                        motorOutput = prevMotorOutput[i] + mixerRuntime.rpmLimiterAccelLimit;
+                    }
+                }
+            }
+            prevMotorOutput[i] = motorOutput;
             motorOutput = constrainf(motorOutput, motorRangeMin, motorRangeMax);
+            DEBUG_SET(DEBUG_RPM_LIMITER, 3, motorOutput * 100.0f);
         }
         motor[i] = motorOutput;
     }
