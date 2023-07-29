@@ -346,7 +346,7 @@ void mixerInitProfile(void)
 
 #ifdef USE_RPM_LIMITER
     mixerRuntime.rpmLimiterRPMLimit = mixerConfig()->rpm_limiter_rpm_limit * 10.0f;
-    mixerRuntime.rpmLimiterExpectedThrottleLimit = 1.0f;
+    mixerRuntime.rpmLimiterExpectedThrottleLimit = mixerRuntime.rpmLimiterRPMLimit / (24.0f*2070.0f/10.0f);
     mixerIntitRPMLimitThrottleScaling();
     mixerRuntime.rpmLimiterPGain = mixerConfig()->rpm_limiter_p * 0.00015f;
     mixerRuntime.rpmLimiterIGain = mixerConfig()->rpm_limiter_i * 0.01f * pidGetDT();
@@ -360,7 +360,8 @@ void mixerInitProfile(void)
 #ifdef USE_RPM_LIMITER
     void mixerIntitRPMLimitThrottleScaling(void)
     {
-        const float maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv / 10.0f);
+        // const float maxExpectedRPMs = MAX(1.0f, (getBatteryVoltage() / 100.0f) * mixerConfig()->motor_kv / 10.0f);
+        const float maxExpectedRPMs = 24.0f*2070.0f/10.0f;
         mixerRuntime.rpmLimiterExpectedThrottleLimit =  MIN(1.0f, mixerRuntime.rpmLimiterRPMLimit / maxExpectedRPMs);
     }
 #endif

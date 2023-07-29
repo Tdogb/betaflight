@@ -250,11 +250,16 @@ static void calculateThrottleAndCurrentMotorEndpoints(timeUs_t currentTimeUs)
 #if defined(USE_BATTERY_VOLTAGE_SAG_COMPENSATION)
         float motorRangeAttenuationFactor = 0;
         // reduce motorRangeMax when battery is full
+        float oldVbatCompensationFactor = mixerRuntime.vbatSagCompensationFactor;
+        mixerRuntime.vbatSagCompensationFactor = ABS(mixerRuntime.vbatSagCompensationFactor);
         if (mixerRuntime.vbatSagCompensationFactor > 0.0f) {
             const uint16_t currentCellVoltage = getBatterySagCellVoltage();
             // batteryGoodness = 1 when voltage is above vbatFull, and 0 when voltage is below vbatLow
             float batteryGoodness = 1.0f - constrainf((mixerRuntime.vbatFull - currentCellVoltage) / mixerRuntime.vbatRangeToCompensate, 0.0f, 1.0f);
             motorRangeAttenuationFactor = (mixerRuntime.vbatRangeToCompensate / mixerRuntime.vbatFull) * batteryGoodness * mixerRuntime.vbatSagCompensationFactor;
+            if (oldVbatCompensationFactor < 0.0f) {
+                motorRangeAttenuationFactor = 1.0 - motorRangeAttenuationFactor;
+            }
             DEBUG_SET(DEBUG_BATTERY, 2, lrintf(batteryGoodness * 100));
             DEBUG_SET(DEBUG_BATTERY, 3, lrintf(motorRangeAttenuationFactor * 1000));
         }
@@ -385,7 +390,7 @@ static void applyRPMLimiter(mixerRuntime_t *mixer)
         float rpmLimiterD = rpmDerivative * mixer->rpmLimiterDGain;
         float pidOutput = rpmLimiterP + mixer->rpmLimiterI + rpmLimiterD;
         // Throttle limit learning
-        if (smoothedRPMError > -10.0f && rcCommand[THROTTLE] < rxConfig()->maxcheck) {
+        if (smoothedRPMError > 0.0f && rcCommand[THROTTLE] < rxConfig()->maxcheck) {
             mixer->rpmLimiterExpectedThrottleLimit *= 1.0f - 4.8f / pidGetPidFrequency();
         } else if (pidOutput < -0.05f && rcCommand[THROTTLE] > rxConfig()->maxcheck && !isMotorSaturated()) { // Throttle accel corresponds with motor accel
             mixer->rpmLimiterExpectedThrottleLimit *= 1.0f + 3.2f / pidGetPidFrequency();
