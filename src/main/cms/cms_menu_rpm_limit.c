@@ -27,7 +27,6 @@
 #include "platform.h"
 
 #ifdef USE_CMS
-#ifdef USE_RPM_LIMIT
 
 #include "cms/cms.h"
 #include "cms/cms_types.h"
@@ -88,4 +87,3 @@ CMS_Menu cmsx_menuRpmLimit = {
 };
 
 #endif
-#endif // USE_RPM_LIMIT

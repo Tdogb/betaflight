@@ -288,13 +288,18 @@ static void renderOsdEscRpmOrFreq(getEscRpmOrFreqFnPtr escFnPtr, osdElementParms
 {
     int x = element->elemPosX;
     int y = element->elemPosY;
+    char rpmStr[6];
+    int average_rpm_osd = 0;
     for (int i=0; i < getMotorCount(); i++) {
-        char rpmStr[6];
         const int rpm = MIN((*escFnPtr)(i),99999);
+        average_rpm_osd += rpm;
         const int len = tfp_sprintf(rpmStr, "%d", rpm);
         rpmStr[len] = '\0';
         osdDisplayWrite(element, x, y + i, DISPLAYPORT_SEVERITY_NORMAL, rpmStr);
     }
+    const int len = tfp_sprintf(rpmStr, "M24 %d", average_rpm_osd/4);
+    rpmStr[len] = '\0';
+    osdDisplayWrite(element, x, y + i, DISPLAYPORT_SEVERITY_NORMAL, rpmStr);
     element->drawElement = false;
 }
 #endif
@@ -989,7 +994,7 @@ static void osdElementEscRpm(osdElementParms_t *element)
 
 static void osdElementEscRpmFreq(osdElementParms_t *element)
 {
-    renderOsdEscRpmOrFreq(&getEscRpmFreq,element);
+    renderOsdEscRpmOrFreq(&getEscRpm,element);
 }
 
 #endif
@@ -2127,12 +2132,11 @@ void osdDrawSpec(displayPort_t *osdDisplayPort)
         int len = 0;
         int currentRow = midRow - 3;
 
-#ifdef USE_RPM_LIMIT
         const bool rpmLimitActive = mixerConfig()->rpm_limit > 0 && isMotorProtocolBidirDshot();
         if (rpmLimitActive) {
-            len = tfp_sprintf(buff, "RPM LIMIT ON  %d", mixerConfig()->rpm_limit_value);
+            len = tfp_sprintf(buff, "MAYHEM RPM LIMIT ON  %d", mixerConfig()->rpm_limit_value);
         } else {
-            len = tfp_sprintf(buff, "%s", "RPM LIMIT OFF");
+            len = tfp_sprintf(buff, "%s", "MAYHEM RPM LIMIT OFF");
         }
         displayWrite(osdDisplayPort, midCol - len/2, currentRow++, DISPLAYPORT_SEVERITY_NORMAL, buff);
 
@@ -2145,7 +2149,6 @@ void osdDrawSpec(displayPort_t *osdDisplayPort)
             len = tfp_sprintf(buff, "%d  %d  %d", mixerConfig()->rpm_limit_p, mixerConfig()->rpm_limit_i, mixerConfig()->rpm_limit_d);
             displayWrite(osdDisplayPort, midCol - len/2, currentRow++, DISPLAYPORT_SEVERITY_NORMAL, buff);
         } else
-#endif // #USE_RPM_LIMIT
         {
             memset(buff,0,strlen(buff));
             len = tfp_sprintf(buff, "THR LIMIT %s", lookupTableThrottleLimitType[currentControlRateProfile->throttle_limit_type]);

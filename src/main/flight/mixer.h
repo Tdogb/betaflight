@@ -97,24 +97,18 @@ typedef struct mixerConfig_s {
     uint8_t crashflip_motor_percent;
     uint8_t crashflip_expo;
     uint8_t mixer_type;
-#ifdef USE_RPM_LIMIT
     bool rpm_limit;
     uint16_t rpm_limit_p;
     uint16_t rpm_limit_i;
     uint16_t rpm_limit_d;
     uint16_t rpm_limit_value;
-#endif
 } mixerConfig_t;
 
 PG_DECLARE(mixerConfig_t, mixerConfig);
 
 #define CHANNEL_FORWARDING_DISABLED (uint8_t)0xFF
 
-#ifdef USE_RPM_LIMIT
 #define RPM_LIMIT_ACTIVE mixerConfig()->rpm_limit
-#else
-#define RPM_LIMIT_ACTIVE false
-#endif
 
 extern const mixer_t mixers[];
 extern float motor[MAX_SUPPORTED_MOTORS];

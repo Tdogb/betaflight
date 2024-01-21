@@ -343,7 +343,6 @@ static void applyFlipOverAfterCrashModeToMotors(void)
     }
 }
 
-#ifdef USE_RPM_LIMIT
 #define STICK_HIGH_DEADBAND 5    // deadband to make sure throttle cap can raise, even with maxcheck set around 2000
 static void applyRpmLimiter(mixerRuntime_t *mixer)
 {
@@ -384,7 +383,6 @@ static void applyRpmLimiter(mixerRuntime_t *mixer)
     DEBUG_SET(DEBUG_RPM_LIMIT, 6, lrintf(mixer->rpmLimiterI * 100.0f));
     DEBUG_SET(DEBUG_RPM_LIMIT, 7, lrintf(d * 100.0f));
 }
-#endif // USE_RPM_LIMIT
 
 static void applyMixToMotors(float motorMix[MAX_SUPPORTED_MOTORS], motorMixer_t *activeMixer)
 {
@@ -667,11 +665,9 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     throttle = pidCompensateThrustLinearization(throttle);
 #endif
 
-#ifdef USE_RPM_LIMIT
     if (RPM_LIMIT_ACTIVE && motorConfig()->dev.useDshotTelemetry && ARMING_FLAG(ARMED)) {
         applyRpmLimiter(&mixerRuntime);
     }
-#endif
 
     // Find roll/pitch/yaw desired output
     // ??? Where is the optimal location for this code?
