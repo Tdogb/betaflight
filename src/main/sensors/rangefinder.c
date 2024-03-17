@@ -25,6 +25,13 @@
 
 #include "platform.h"
 
+#ifndef USE_RANGEFINDER
+#define USE_RANGEFINDER
+#endif
+#ifndef USE_RANGEFINDER_TF
+#define USE_RANGEFINDER_TF
+#endif
+
 #ifdef USE_RANGEFINDER
 
 #include "build/build_config.h"
@@ -39,9 +46,12 @@
 
 #include "drivers/io.h"
 #include "drivers/rangefinder/rangefinder.h"
-#include "drivers/rangefinder/rangefinder_hcsr04.h"
-#include "drivers/rangefinder/rangefinder_lidartf.h"
+#include "drivers/rangefinder/rangefinder_SHT45.h"
 #include "drivers/time.h"
+#include "drivers/bus.h"
+#include "drivers/bus_i2c_busdev.h"
+#include "drivers/bus_spi.h"
+#include "drivers/io.h"
 
 #include "fc/runtime_config.h"
 
@@ -54,298 +64,109 @@
 #include "sensors/rangefinder.h"
 #include "sensors/battery.h"
 
-//#include "uav_interconnect/uav_interconnect.h"
-
-// XXX Interface to CF/BF legacy(?) altitude estimation code.
-// XXX Will be gone once iNav's estimator is ported.
-int16_t rangefinderMaxRangeCm;
-int16_t rangefinderMaxAltWithTiltCm;
-int16_t rangefinderCfAltCm; // Complimentary Filter altitude
-
 rangefinder_t rangefinder;
+PG_REGISTER_WITH_RESET_FN(rangefinderConfig_t, rangefinderConfig, PG_RANGEFINDER_CONFIG, 4);
 
-#define RANGEFINDER_HARDWARE_TIMEOUT_MS         500     // Accept 500ms of non-responsive sensor, report HW failure otherwise
+void pgResetFn_rangefinderConfig(rangefinderConfig_t *rangefinderConfig) {
+    rangefinderConfig->rangefinder_hardware = 3;
+    rangefinderConfig->rangefinder_busType = BUS_TYPE_I2C;
+    rangefinderConfig->rangefinder_i2c_device = I2C_DEV_TO_CFG(I2C_DEVICE);
+    rangefinderConfig->rangefinder_i2c_address = 0x44;
+}
 
-#define RANGEFINDER_DYNAMIC_THRESHOLD           600     //Used to determine max. usable rangefinder disatance
-#define RANGEFINDER_DYNAMIC_FACTOR              75
-
-PG_REGISTER_WITH_RESET_TEMPLATE(rangefinderConfig_t, rangefinderConfig, PG_RANGEFINDER_CONFIG, 0);
-
-PG_RESET_TEMPLATE(rangefinderConfig_t, rangefinderConfig,
-    .rangefinder_hardware = RANGEFINDER_NONE,
-);
-
-#ifdef USE_RANGEFINDER_HCSR04
-PG_REGISTER_WITH_RESET_TEMPLATE(sonarConfig_t, sonarConfig, PG_SONAR_CONFIG, 1);
-
-PG_RESET_TEMPLATE(sonarConfig_t, sonarConfig,
-    .triggerTag = IO_TAG(RANGEFINDER_HCSR04_TRIGGER_PIN),
-    .echoTag = IO_TAG(RANGEFINDER_HCSR04_ECHO_PIN),
-);
-#endif
-
-/*
- * Detect which rangefinder is present
- */
-static bool rangefinderDetect(rangefinderDev_t * dev, uint8_t rangefinderHardwareToUse)
-{
-    rangefinderType_e rangefinderHardware = RANGEFINDER_NONE;
-    requestedSensors[SENSOR_INDEX_RANGEFINDER] = rangefinderHardwareToUse;
-
-#if !defined(USE_RANGEFINDER_HCSR04) && !defined(USE_RANGEFINDER_TF)
-    UNUSED(dev);
-#endif
-
-    switch (rangefinderHardwareToUse) {
-        case RANGEFINDER_HCSR04:
-#ifdef USE_RANGEFINDER_HCSR04
-            {
-                if (hcsr04Detect(dev, sonarConfig())) {   // FIXME: Do actual detection if HC-SR04 is plugged in
-                    rangefinderHardware = RANGEFINDER_HCSR04;
-                    rescheduleTask(TASK_RANGEFINDER, TASK_PERIOD_MS(RANGEFINDER_HCSR04_TASK_PERIOD_MS));
-                }
-            }
-#endif
-            break;
-
-        case RANGEFINDER_TFMINI:
-#if defined(USE_RANGEFINDER_TF)
-            if (lidarTFminiDetect(dev)) {
-                rangefinderHardware = RANGEFINDER_TFMINI;
-                rescheduleTask(TASK_RANGEFINDER, TASK_PERIOD_MS(RANGEFINDER_TF_TASK_PERIOD_MS));
-            }
-#endif
-            break;
-
-        case RANGEFINDER_TF02:
-#if defined(USE_RANGEFINDER_TF)
-            if (lidarTF02Detect(dev)) {
-                rangefinderHardware = RANGEFINDER_TF02;
-                rescheduleTask(TASK_RANGEFINDER, TASK_PERIOD_MS(RANGEFINDER_TF_TASK_PERIOD_MS));
-            }
-#endif
-            break;
-
-        case RANGEFINDER_NONE:
-            rangefinderHardware = RANGEFINDER_NONE;
-            break;
-    }
-
-    if (rangefinderHardware == RANGEFINDER_NONE) {
-        sensorsClear(SENSOR_RANGEFINDER);
-        return false;
-    }
-
-    detectedSensors[SENSOR_INDEX_RANGEFINDER] = rangefinderHardware;
+static bool rangefinderDetect(rangefinderDev_t *rangefinderDev, uint8_t num) {
+    UNUSED(num);
+    extDevice_t *dev = &rangefinderDev->dev;
+    i2cBusSetInstance(dev, rangefinderConfig()->rangefinder_i2c_device);
+    dev->busType_u.i2c.address = rangefinderConfig()->rangefinder_i2c_address;
+    rangefinderSHT45Detect(rangefinderDev);
     sensorsSet(SENSOR_RANGEFINDER);
     return true;
 }
 
-void rangefinderResetDynamicThreshold(void)
-{
-    rangefinder.snrThresholdReached = false;
-    rangefinder.dynamicDistanceThreshold = 0;
+static bool rangefinderReady = false;
+
+void rangefinderInit(void) {
+    rangefinderReady = rangefinderDetect(&rangefinder.dev, rangefinderConfig()->rangefinder_hardware);
 }
 
-bool rangefinderInit(void)
-{
-    if (!rangefinderDetect(&rangefinder.dev, rangefinderConfig()->rangefinder_hardware)) {
-        return false;
+typedef enum {
+    RANGEFINDER_STATE_HUMIDITY_START,
+    RANGEFINDER_STATE_HUMIDITY_READ,
+    RANGEFINDER_STATE_HUMIDITY_SAMPLE,
+    RANGEFINDER_STATE_COUNT
+} rangefinderState_e;
+
+uint32_t rangefinderUpdate(timeUs_t currentTimeUs) {
+    static timeUs_t rangefinderStateDurationUs[RANGEFINDER_STATE_COUNT];
+    static rangefinderState_e state = RANGEFINDER_STATE_HUMIDITY_START;
+    rangefinderState_e oldState = state;
+    timeUs_t executeTimeUs;
+    timeUs_t sleepTime = 1000; // Wait 1ms between states
+    if (busBusy(&rangefinder.dev.dev, NULL)) {
+        // If the bus is busy, simply return to have another go later
+        schedulerIgnoreTaskStateTime();
+        return sleepTime;
     }
+    switch (state) {
+        default:
+        case RANGEFINDER_STATE_HUMIDITY_START:
+            rangefinder.dev.start_up(&rangefinder.dev);
+            state = RANGEFINDER_STATE_HUMIDITY_READ;
+            sleepTime = rangefinder.dev.up_delay;
+            break;
 
-    rangefinder.dev.init(&rangefinder.dev);
-    rangefinder.rawAltitude = RANGEFINDER_OUT_OF_RANGE;
-    rangefinder.calculatedAltitude = RANGEFINDER_OUT_OF_RANGE;
-    rangefinder.maxTiltCos = cos_approx(DECIDEGREES_TO_RADIANS(rangefinder.dev.detectionConeExtendedDeciDegrees / 2.0f));
-    rangefinder.lastValidResponseTimeMs = millis();
-    rangefinder.snr = 0;
+        case RANGEFINDER_STATE_HUMIDITY_READ:
+            // // if (rangefinder.dev.read_up(&rangefinder.dev)) {
+            state = RANGEFINDER_STATE_HUMIDITY_SAMPLE;
+            // // } else {
+            //     // No action was taken as the read has not completed
+            schedulerIgnoreTaskExecTime();
+            // // }
+            break;
 
-    rangefinderResetDynamicThreshold();
-
-    // XXX Interface to CF/BF legacy(?) altitude estimation code.
-    // XXX Will be gone once iNav's estimator is ported.
-    rangefinderMaxRangeCm = rangefinder.dev.maxRangeCm;
-    rangefinderMaxAltWithTiltCm = rangefinderMaxRangeCm * rangefinder.maxTiltCos;
-    rangefinderCfAltCm = rangefinder.dev.maxRangeCm / 2 ; // Complimentary Filter altitude
-
-    return true;
-}
-
-static int32_t applyMedianFilter(int32_t newReading)
-{
-    #define DISTANCE_SAMPLES_MEDIAN 5
-    static int32_t filterSamples[DISTANCE_SAMPLES_MEDIAN];
-    static int filterSampleIndex = 0;
-    static bool medianFilterReady = false;
-
-    if (newReading > RANGEFINDER_OUT_OF_RANGE) {// only accept samples that are in range
-        filterSamples[filterSampleIndex] = newReading;
-        ++filterSampleIndex;
-        if (filterSampleIndex == DISTANCE_SAMPLES_MEDIAN) {
-            filterSampleIndex = 0;
-            medianFilterReady = true;
-        }
-    }
-    return medianFilterReady ? quickMedianFilter5(filterSamples) : newReading;
-}
-
-static int16_t computePseudoSnr(int32_t newReading)
-{
-    #define SNR_SAMPLES 5
-    static int16_t snrSamples[SNR_SAMPLES];
-    static uint8_t snrSampleIndex = 0;
-    static int32_t previousReading = RANGEFINDER_OUT_OF_RANGE;
-    static bool snrReady = false;
-    int16_t pseudoSnr = 0;
-
-    const int delta = newReading - previousReading;
-    snrSamples[snrSampleIndex] = constrain(delta * delta / 10, 0, 6400);
-    ++snrSampleIndex;
-    if (snrSampleIndex == SNR_SAMPLES) {
-        snrSampleIndex = 0;
-        snrReady = true;
-    }
-
-    previousReading = newReading;
-
-    if (snrReady) {
-
-        for (uint8_t i = 0; i < SNR_SAMPLES; i++) {
-            pseudoSnr += snrSamples[i];
-        }
-
-        return constrain(pseudoSnr, 0, 32000);
-    } else {
-        return RANGEFINDER_OUT_OF_RANGE;
-    }
-}
-
-/*
- * This is called periodically by the scheduler
- */
-void rangefinderUpdate(void)
-{
-    if (rangefinder.dev.update) {
-        rangefinder.dev.update(&rangefinder.dev);
-    }
-}
-
-bool isSurfaceAltitudeValid(void)
-{
-
-    /*
-     * Preconditions: raw and calculated altidude > 0
-     * SNR lower than threshold
-     */
-    if (
-        rangefinder.calculatedAltitude > 0 &&
-        rangefinder.rawAltitude > 0 &&
-        rangefinder.snr < RANGEFINDER_DYNAMIC_THRESHOLD
-    ) {
-
-        /*
-         * When critical altitude was determined, distance reported by rangefinder
-         * has to be lower than it to assume healthy readout
-         */
-        if (rangefinder.snrThresholdReached) {
-            return (rangefinder.rawAltitude < rangefinder.dynamicDistanceThreshold);
-        } else {
-            return true;
-        }
-
-    } else {
-        return false;
-    }
-
-}
-
-/**
- * Get the last distance measured by the sonar in centimeters. When the ground is too far away, RANGEFINDER_OUT_OF_RANGE is returned.
- */
-bool rangefinderProcess(float cosTiltAngle)
-{
-    if (rangefinder.dev.read) {
-        const int32_t distance = rangefinder.dev.read(&rangefinder.dev);
-
-        // If driver reported no new measurement - don't do anything
-        if (distance == RANGEFINDER_NO_NEW_DATA) {
-            return false;
-        }
-
-        if (distance >= 0) {
-            rangefinder.lastValidResponseTimeMs = millis();
-            rangefinder.rawAltitude = applyMedianFilter(distance);
-        } else if (distance == RANGEFINDER_OUT_OF_RANGE) {
-            rangefinder.lastValidResponseTimeMs = millis();
-            rangefinder.rawAltitude = RANGEFINDER_OUT_OF_RANGE;
-        }
-        else {
-            // Invalid response / hardware failure
-            rangefinder.rawAltitude = RANGEFINDER_HARDWARE_FAILURE;
-        }
-
-        rangefinder.snr = computePseudoSnr(distance);
-
-        if (rangefinder.snrThresholdReached == false && rangefinder.rawAltitude > 0) {
-
-            if (rangefinder.snr < RANGEFINDER_DYNAMIC_THRESHOLD && rangefinder.dynamicDistanceThreshold < rangefinder.rawAltitude) {
-                rangefinder.dynamicDistanceThreshold = rangefinder.rawAltitude * RANGEFINDER_DYNAMIC_FACTOR / 100;
+        case RANGEFINDER_STATE_HUMIDITY_SAMPLE:
+            if (!rangefinder.dev.get_up(&rangefinder.dev)) {
+                // No action was taken as the read has not completed
+                schedulerIgnoreTaskExecTime();
+                break;
             }
 
-            if (rangefinder.snr >= RANGEFINDER_DYNAMIC_THRESHOLD) {
-                rangefinder.snrThresholdReached = true;
-            }
+            // update rangefinder data
+            rangefinder.dev.calculate(&rangefinder.humidity, &rangefinder.temperature);
 
-        }
+            // DEBUG_SET(DEBUG_RANGEFINDER, 1, lrintf(rangefinder.humidity));   
+            // DEBUG_SET(DEBUG_RANGEFINDER, 2, rangefinder.temperature);                 // c°C
+            // DEBUG_SET(DEBUG_RANGEFINDER, 3, 69);                 
 
-        DEBUG_SET(DEBUG_RANGEFINDER, 3, rangefinder.snr);
-
-        DEBUG_SET(DEBUG_RANGEFINDER_QUALITY, 0, rangefinder.rawAltitude);
-        DEBUG_SET(DEBUG_RANGEFINDER_QUALITY, 1, rangefinder.snrThresholdReached);
-        DEBUG_SET(DEBUG_RANGEFINDER_QUALITY, 2, rangefinder.dynamicDistanceThreshold);
-        DEBUG_SET(DEBUG_RANGEFINDER_QUALITY, 3, isSurfaceAltitudeValid());
-
-    }
-    else {
-        // Bad configuration
-        rangefinder.rawAltitude = RANGEFINDER_OUT_OF_RANGE;
+            state = RANGEFINDER_STATE_HUMIDITY_START;
+            break;
     }
 
-    /**
-    * Apply tilt correction to the given raw sonar reading in order to compensate for the tilt of the craft when estimating
-    * the altitude. Returns the computed altitude in centimeters.
-    *
-    * When the ground is too far away or the tilt is too large, RANGEFINDER_OUT_OF_RANGE is returned.
-    */
-    if (cosTiltAngle < rangefinder.maxTiltCos || rangefinder.rawAltitude < 0) {
-        rangefinder.calculatedAltitude = RANGEFINDER_OUT_OF_RANGE;
-    } else {
-        rangefinder.calculatedAltitude = rangefinder.rawAltitude * cosTiltAngle;
+    // Where we are using a state machine call schedulerIgnoreTaskExecRate() for all states bar one
+    if (state != RANGEFINDER_STATE_HUMIDITY_START) {
+        schedulerIgnoreTaskExecRate();
     }
 
-    DEBUG_SET(DEBUG_RANGEFINDER, 1, rangefinder.rawAltitude);
-    DEBUG_SET(DEBUG_RANGEFINDER, 2, rangefinder.calculatedAltitude);
+    executeTimeUs = micros() - currentTimeUs;
 
-    return true;
+    if (executeTimeUs > rangefinderStateDurationUs[oldState]) {
+        rangefinderStateDurationUs[oldState] = executeTimeUs;
+    }
+
+    schedulerSetNextStateTime(rangefinderStateDurationUs[state]);
+
+    return sleepTime;
+}
+bool rangefinderIsHealthy(void) {
+    return rangefinderReady;
 }
 
-/**
- * Get the latest altitude that was computed, or RANGEFINDER_OUT_OF_RANGE if sonarCalculateAltitude
- * has never been called.
- */
-int32_t rangefinderGetLatestAltitude(void)
-{
-    return rangefinder.calculatedAltitude;
+int32_t rangefinderGetLatestHumidity(void) {
+    return rangefinder.humidity;
+}
+int32_t rangefinderGetLatestTemperature(void) {
+    return rangefinder.temperature;
 }
 
-int32_t rangefinderGetLatestRawAltitude(void)
-{
-    return rangefinder.rawAltitude;
-}
-
-bool rangefinderIsHealthy(void)
-{
-    return (millis() - rangefinder.lastValidResponseTimeMs) < RANGEFINDER_HARDWARE_TIMEOUT_MS;
-}
 #endif
-

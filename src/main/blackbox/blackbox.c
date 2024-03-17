@@ -1106,7 +1106,7 @@ static void loadMainState(timeUs_t currentTimeUs)
 
 #ifdef USE_RANGEFINDER
     // Store the raw sonar value without applying tilt correction
-    blackboxCurrent->surfaceRaw = rangefinderGetLatestAltitude();
+    blackboxCurrent->surfaceRaw = rangefinderGetLatestHumidity();
 #endif
 
     blackboxCurrent->rssi = getRssi();

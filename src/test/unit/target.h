@@ -31,6 +31,7 @@
 #define USE_BLACKBOX
 #define USE_MAG
 #define USE_BARO
+#define USE_RANGEFINDER
 #define USE_GPS
 #define USE_DASHBOARD
 #define USE_SERIALRX

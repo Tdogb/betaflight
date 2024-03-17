@@ -334,7 +334,7 @@ extern uint8_t _dmaram_end__;
 #if !defined(USE_EXST) && !defined(USE_SDCARD)
 #define USE_SDCARD
 #endif
-
+#define USE_RANGEFINDER
 #if defined(STM32F405) || defined(STM32F745) || defined(STM32H7)
 #define USE_VTX_RTC6705
 #define USE_VTX_RTC6705_SOFTSPI

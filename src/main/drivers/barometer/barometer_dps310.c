@@ -46,6 +46,12 @@
 
 // 10 MHz max SPI frequency
 #define DPS310_MAX_SPI_CLK_HZ 10000000
+#ifndef USE_BARO
+#define USE_BARO
+#endif
+#ifndef USE_BARO_DPS310
+#define USE_BARO_DPS310
+#endif
 
 #if defined(USE_BARO) && (defined(USE_BARO_DPS310) || defined(USE_BARO_SPI_DPS310))
 

@@ -1346,7 +1346,7 @@ case MSP_NAME:
 
     case MSP_SONAR_ALTITUDE:
 #if defined(USE_RANGEFINDER)
-        sbufWriteU32(dst, rangefinderGetLatestAltitude());
+        sbufWriteU32(dst, rangefinderGetLatestHumidity());
 #else
         sbufWriteU32(dst, 0);
 #endif

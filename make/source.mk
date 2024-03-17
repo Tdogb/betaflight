@@ -160,6 +160,7 @@ COMMON_SRC = \
             drivers/light_ws2811strip.c \
             drivers/rangefinder/rangefinder_hcsr04.c \
             drivers/rangefinder/rangefinder_lidartf.c \
+            drivers/rangefinder/rangefinder_SHT45.c \
             drivers/serial_escserial.c \
             drivers/vtx_common.c \
             drivers/vtx_table.c \

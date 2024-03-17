@@ -19,36 +19,29 @@
  */
 
 #pragma once
-
 #include "common/time.h"
-#include "drivers/io_types.h"
 
-#define RANGEFINDER_OUT_OF_RANGE        (-1)
-#define RANGEFINDER_HARDWARE_FAILURE    (-2)
-#define RANGEFINDER_NO_NEW_DATA         (-3)
-
-typedef struct rangefinderHardwarePins_s {
-    ioTag_t triggerTag;
-    ioTag_t echoTag;
-} rangefinderHardwarePins_t;
-
+#include "drivers/bus.h" // XXX
+#include "drivers/exti.h"
 struct rangefinderDev_s;
-typedef void (*rangefinderOpInitFuncPtr)(struct rangefinderDev_s * dev);
-typedef void (*rangefinderOpStartFuncPtr)(struct rangefinderDev_s * dev);
-typedef int32_t (*rangefinderOpReadFuncPtr)(struct rangefinderDev_s * dev);
+
+typedef void (*rangefinderOpFuncPtr)(struct rangefinderDev_s * hum);
+typedef bool (*rangefinderOpGetFuncPtr)(struct rangefinderDev_s * hum);
+typedef void (*rangefinderCalculateFuncPtr)(int32_t *humidity, int32_t *temperature);
 
 typedef struct rangefinderDev_s {
-    timeMs_t delayMs;
-    int16_t maxRangeCm;
-
-    // these are full detection cone angles, maximum tilt is half of this
-    int16_t detectionConeDeciDegrees; // detection cone angle as in device spec
-    int16_t detectionConeExtendedDeciDegrees; // device spec is conservative, in practice have slightly larger detection cone
-
-    // function pointers
-    rangefinderOpInitFuncPtr init;
-    rangefinderOpStartFuncPtr update;
-    rangefinderOpReadFuncPtr read;
+    extDevice_t dev;
+    extiCallbackRec_t exti;
+    bool combined_read;
+    uint32_t ut_delay;
+    uint32_t up_delay;
+    rangefinderOpFuncPtr start_ut;
+    rangefinderOpGetFuncPtr read_ut;
+    rangefinderOpGetFuncPtr get_ut;
+    rangefinderOpFuncPtr start_up;
+    rangefinderOpGetFuncPtr read_up;
+    rangefinderOpGetFuncPtr get_up;
+    rangefinderCalculateFuncPtr calculate;
 } rangefinderDev_t;
 
 extern int16_t rangefinderMaxRangeCm;
