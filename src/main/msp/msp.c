@@ -2131,6 +2131,9 @@ case MSP_NAME:
 
         break;
 #endif
+    case MSP_GET_CUSTOM_SENSORS:
+        sbufWriteU16(dst, getTaskDeltaTimeUs(TASK_PID));
+        break;
     default:
         unsupportedCommand = true;
     }
@@ -2657,8 +2660,8 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 
     case MSP_SET_CUSTOM_SENSORS:
         {
-            uint32_t humidity_sht45 = sbufReadU32(src);
-            uint32_t temp_sht45 = sbufReadU32(src);
+            uint16_t humidity_sht45 = sbufReadU32(src);
+            uint16_t temp_sht45 = sbufReadU32(src);
             uint32_t pressure_lps = sbufReadU32(src);
             uint16_t temp_lps = sbufReadU16(src);
             uint16_t differential_pressure_up = sbufReadU16(src);
@@ -2667,6 +2670,10 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             uint16_t forward_die_temp = sbufReadU16(src);
             uint16_t differential_pressure_side = sbufReadU16(src);
             uint16_t side_die_temp = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up);
             float humidity_sht45_ = -6 + 125 * humidity_sht45 / 65535;
             static int16_t P_CNT_ = 16383;
             // static int16_t T_CNT_ = 2047;
@@ -2699,13 +2706,12 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             UNUSED(forward_die_temp);
             UNUSED(differential_pressure_side);
             UNUSED(side_die_temp);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45_);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps_);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps_);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up_Pa);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45_);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps_);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps_);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up_Pa);
         }
         break;
-
 #if defined(USE_ACC)
     case MSP_SET_ACC_TRIM:
         accelerometerConfigMutable()->accelerometerTrims.values.pitch = sbufReadU16(src);
