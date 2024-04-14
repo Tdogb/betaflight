@@ -534,6 +534,7 @@ void processMAVLinkTelemetry(void)
     if (mavlinkStreamTrigger(MAV_DATA_STREAM_EXTRA2)) {
         mavlinkSendHUDAndHeartbeat();
     }
+    if (mavlinkStreamTrigger())
 }
 
 void handleMAVLinkTelemetry(void)

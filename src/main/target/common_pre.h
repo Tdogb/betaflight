@@ -322,14 +322,14 @@ extern uint8_t _dmaram_end__;
 #define USE_MAX7456
 #endif
 
-#if !defined(USE_RX_SPI)
-#define USE_RX_SPI
+// #if !defined(USE_RX_SPI)
+// #define USE_RX_SPI
 
-#define USE_RX_CC2500
-#define USE_RX_EXPRESSLRS
-#define USE_RX_SX1280
-#define USE_RX_SX127X
-#endif // !USE_RX_SPI
+// #define USE_RX_CC2500
+// #define USE_RX_EXPRESSLRS
+// #define USE_RX_SX1280
+// #define USE_RX_SX127X
+// #endif // !USE_RX_SPI
 
 #if !defined(USE_EXST) && !defined(USE_SDCARD)
 #define USE_SDCARD
@@ -346,10 +346,10 @@ extern uint8_t _dmaram_end__;
 #define USE_RANGEFINDER_TF
 #endif
 
-#define USE_RX_PPM
-#define USE_RX_PWM
+// #define USE_RX_PPM
+// #define USE_RX_PWM
 
-#define USE_BRUSHED_ESC_AUTODETECT  // Detect if brushed motors are connected and set defaults appropriately to avoid motors spinning on boot
+// #define USE_BRUSHED_ESC_AUTODETECT  // Detect if brushed motors are connected and set defaults appropriately to avoid motors spinning on boot
 
 #define USE_PINIO
 
@@ -358,11 +358,11 @@ extern uint8_t _dmaram_end__;
 #define USE_SERIALRX
 #define USE_SERIALRX_CRSF       // Team Black Sheep Crossfire protocol
 #define USE_SERIALRX_GHST       // ImmersionRC Ghost Protocol
-#define USE_SERIALRX_IBUS       // FlySky and Turnigy receivers
+// #define USE_SERIALRX_IBUS       // FlySky and Turnigy receivers
 #define USE_SERIALRX_SBUS       // Frsky and Futaba receivers
-#define USE_SERIALRX_SPEKTRUM   // SRXL, DSM2 and DSMX protocol
-#define USE_SERIALRX_FPORT      // FrSky FPort
-#define USE_SERIALRX_XBUS       // JR
+// #define USE_SERIALRX_SPEKTRUM   // SRXL, DSM2 and DSMX protocol
+// #define USE_SERIALRX_FPORT      // FrSky FPort
+// #define USE_SERIALRX_XBUS       // JR
 #define USE_SERIALRX_SRXL2      // Spektrum SRXL2 protocol
 
 #endif // !defined(USE_SERIAL_RX)
@@ -370,15 +370,16 @@ extern uint8_t _dmaram_end__;
 #if !defined(USE_TELEMETRY)
 #define USE_TELEMETRY
 
-#define USE_TELEMETRY_FRSKY_HUB
-#define USE_TELEMETRY_SMARTPORT
+// #define USE_TELEMETRY_FRSKY_HUB
+// #define USE_TELEMETRY_SMARTPORT
 #define USE_TELEMETRY_CRSF
 #define USE_TELEMETRY_GHST
 #define USE_TELEMETRY_SRXL
+#define USE_TELEMETRY_MAVLINK
 
 #endif // !defined(USE_TELEMETRY)
 
-#define USE_SERVOS
+// #define USE_SERVOS
 
 #define USE_VTX
 #define USE_OSD
