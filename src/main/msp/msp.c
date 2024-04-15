@@ -154,7 +154,11 @@
 #endif
 
 #include "msp.h"
+temp_mavlink_tornado_sensors_t tornado_sensors_msp_storage;
 
+temp_mavlink_tornado_sensors_t get_tornado_sensors_msp_storage(void) {
+    return tornado_sensors_msp_storage;
+}
 
 static const char * const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; // 4 UPPER CASE alpha numeric characters that identify the flight controller.
 
@@ -2131,9 +2135,6 @@ case MSP_NAME:
 
         break;
 #endif
-    case MSP_GET_CUSTOM_SENSORS:
-        sbufWriteU16(dst, getTaskDeltaTimeUs(TASK_PID));
-        break;
     default:
         unsupportedCommand = true;
     }
@@ -2603,6 +2604,7 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
     uint32_t i;
     uint8_t value;
     const unsigned int dataSize = sbufBytesRemaining(src);
+    DEBUG_SET(DEBUG_CUSTOM_SENSORS, 2, cmdMSP);
     switch (cmdMSP) {
     case MSP_SELECT_SETTING:
         value = sbufReadU8(src);
@@ -2660,62 +2662,42 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 
     case MSP_SET_CUSTOM_SENSORS:
         {
-            uint32_t timeMs = sbufReadU32(src);
-            uint16_t humidity_sht45 = sbufReadU32(src);
-            uint16_t temp_sht45 = sbufReadU32(src);
-            uint32_t pressure_lps = sbufReadU32(src);
-            uint16_t temp_lps = sbufReadU16(src);
-            uint16_t temp_ds18b20 = sbufReadU16(src);
-            uint32_t differential_pressure_forward = sbufReadU32(src);
-            uint16_t forward_die_temp = sbufReadU16(src);
-            uint32_t differential_pressure_up = sbufReadU32(src);
-            uint16_t up_die_temp = sbufReadU16(src);
-            uint32_t differential_pressure_side = sbufReadU32(src);
-            uint16_t side_die_temp = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up);
-            float humidity_sht45_ = -6 + 125 * humidity_sht45 / 65535;
-            static int16_t P_CNT_ = 16383;
-            // static int16_t T_CNT_ = 2047;
-            // static float T_MAX_ = 150;
-            // static float T_MIN_ = -50;
-            // static float c_, d_;
-            // if (true) { //OUTPUT_TYPE_A
-            //     c_ = 0.1f;
-            //     d_ = 0.8f;
-            // } else { //OUTPUT_TYPE_B
-            //     c_ = 0.05f;
-            //     d_ = 0.9f;
-            // }
-            // static float p_max_ = 1.0f;
-            // static float p_min_ = -1.0f;
-            // float pressure_lps_ = 0;
-            // if (pressure_lps & 0x800000) { pressure_lps = (0xff000000 | pressure_lps);}
-            // pressure_lps_ = pressure_lps / 4096.0f;
-            // float temp_lps_ = temp_lps / 100.0f;
-            // float differential_pressure_up_psi = ((differential_pressure_up) - c_ * P_CNT_) * ((p_max_ - p_min_) / (d_ * P_CNT_)) + p_min_;
-            // float differential_pressure_up_Pa = differential_pressure_up_psi * 0.45359237f * 9.80665f / 0.0254f / 0.0254f;
-            // float up_die_temp_ = (up_die_temp) * (T_MAX_ - T_MIN_) / T_CNT_ + T_MIN_;
-            UNUSED(humidity_sht45);
-            UNUSED(temp_sht45);
-            UNUSED(pressure_lps);
-            UNUSED(temp_lps);
-            UNUSED(differential_pressure_up);
-            UNUSED(up_die_temp);
-            UNUSED(differential_pressure_forward);
-            UNUSED(forward_die_temp);
-            UNUSED(differential_pressure_side);
-            UNUSED(side_die_temp);
-            // UNUSED(differential_pressure_up_Pa);
-            // UNUSED(temp_lps_);
-            // UNUSED(pressure_lps_);
-            UNUSED(humidity_sht45_);
-            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45_);
-            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps_);
-            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps_);
-            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up_Pa);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,99);
+            tornado_sensors_msp_storage.time_msec = sbufReadU32(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,1);
+            tornado_sensors_msp_storage.humidity = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,2);
+            tornado_sensors_msp_storage.temp_sht30 = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,3);
+            tornado_sensors_msp_storage.static_pressure = sbufReadU32(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,4);
+            tornado_sensors_msp_storage.temp_lps = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,5);
+            tornado_sensors_msp_storage.temp_ds18b20 = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,6);
+            tornado_sensors_msp_storage.diff_pressure_forward = sbufReadU32(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,7);
+            tornado_sensors_msp_storage.temp_forward_ms4425 = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,9);
+            tornado_sensors_msp_storage.diff_pressure_up = sbufReadU32(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,10);
+            tornado_sensors_msp_storage.temp_up_ms4425 = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,11);
+            tornado_sensors_msp_storage.diff_pressure_side = sbufReadU32(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,12);
+            tornado_sensors_msp_storage.temp_side_ms4425 = sbufReadU16(src);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,13);
+            // float humidity_sht = -6 + 125 * tornado_sensors_msp_storage.humidity / 65535;
+            // uint32_t pressure_lps_int = tornado_sensors_msp_storage.static_pressure;
+            // if (pressure_lps_int & 0x800000) { pressure_lps_int = (0xff000000 | pressure_lps_int);}
+            // float pressure_lps = pressure_lps_int / 4096.0f;
+            // float temp_lps  = tornado_sensors_msp_storage.temp_lps / 100.0f;
+            // UNUSED(temp_lps);
+            // UNUSED(pressure_lps);
+            // UNUSED(humidity_sht);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps);
         }
         break;
 #if defined(USE_ACC)

@@ -413,7 +413,8 @@ typedef enum MAV_DATA_STREAM
 	MAV_DATA_STREAM_EXTRA1=10, /* Dependent on the autopilot | */
 	MAV_DATA_STREAM_EXTRA2=11, /* Dependent on the autopilot | */
 	MAV_DATA_STREAM_EXTRA3=12, /* Dependent on the autopilot | */
-	MAV_DATA_STREAM_ENUM_END=13, /*  | */
+	MAV_DATA_STREAM_TORNADO=13,
+	MAV_DATA_STREAM_ENUM_END=14, /*  | */
 } MAV_DATA_STREAM;
 #endif
 
@@ -770,6 +771,7 @@ typedef enum MAV_BATTERY_FUNCTION
 #include "./mavlink_msg_named_value_int.h"
 #include "./mavlink_msg_statustext.h"
 #include "./mavlink_msg_debug.h"
+#include "./mavlink_msg_tornado_sensors.h"
 
 #ifdef __cplusplus
 }
