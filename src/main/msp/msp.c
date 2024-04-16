@@ -2604,7 +2604,6 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
     uint32_t i;
     uint8_t value;
     const unsigned int dataSize = sbufBytesRemaining(src);
-    DEBUG_SET(DEBUG_CUSTOM_SENSORS, 2, cmdMSP);
     switch (cmdMSP) {
     case MSP_SELECT_SETTING:
         value = sbufReadU8(src);
@@ -2661,32 +2660,34 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
         break;
 
     case MSP_SET_CUSTOM_SENSORS:
-        {
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,99);
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,99);
             tornado_sensors_msp_storage.time_msec = sbufReadU32(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,1);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,1);
             tornado_sensors_msp_storage.humidity = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,2);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,2);
             tornado_sensors_msp_storage.temp_sht30 = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,3);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,3);
             tornado_sensors_msp_storage.static_pressure = sbufReadU32(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,4);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,4);
             tornado_sensors_msp_storage.temp_lps = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,5);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,5);
             tornado_sensors_msp_storage.temp_ds18b20 = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,6);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,6);
             tornado_sensors_msp_storage.diff_pressure_forward = sbufReadU32(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,7);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,7);
             tornado_sensors_msp_storage.temp_forward_ms4425 = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,9);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,8);
             tornado_sensors_msp_storage.diff_pressure_up = sbufReadU32(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,10);
-            tornado_sensors_msp_storage.temp_up_ms4425 = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,11);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,9);
+            // tornado_sensors_msp_storage.temp_up_ms4425 = sbufReadU16(src);
+            tornado_sensors_msp_storage.temp_up_ms4425 = 0;
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,10);
             tornado_sensors_msp_storage.diff_pressure_side = sbufReadU32(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,12);
-            tornado_sensors_msp_storage.temp_side_ms4425 = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,13);
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,11);
+            // tornado_sensors_msp_storage.temp_side_ms4425 = sbufReadU16(src);
+            tornado_sensors_msp_storage.temp_side_ms4425 = 0;
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,12);
+
             // float humidity_sht = -6 + 125 * tornado_sensors_msp_storage.humidity / 65535;
             // uint32_t pressure_lps_int = tornado_sensors_msp_storage.static_pressure;
             // if (pressure_lps_int & 0x800000) { pressure_lps_int = (0xff000000 | pressure_lps_int);}
@@ -2698,7 +2699,6 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht);
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps);
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps);
-        }
         break;
 #if defined(USE_ACC)
     case MSP_SET_ACC_TRIM:

@@ -515,25 +515,25 @@ void mavlinkSendHUDAndHeartbeat(void)
 }
 
 void mavlinkSendTornadoSensors(void) {
-    // temp_mavlink_tornado_sensors_t tornado_sensors_msp_storage = get_tornado_sensors_msp_storage();
-    // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,69);
-    // uint16_t msgLength;
-    // mavlink_msg_tornado_sensors_pack(0, 200, &mavMsg,
-    //     tornado_sensors_msp_storage.time_msec,
-    //     tornado_sensors_msp_storage.humidity,
-    //     tornado_sensors_msp_storage.temp_sht30,
-    //     tornado_sensors_msp_storage.static_pressure,
-    //     tornado_sensors_msp_storage.temp_lps,
-    //     tornado_sensors_msp_storage.temp_ds18b20,
-    //     tornado_sensors_msp_storage.diff_pressure_forward,
-    //     tornado_sensors_msp_storage.temp_forward_ms4425,
-    //     tornado_sensors_msp_storage.diff_pressure_up,
-    //     tornado_sensors_msp_storage.temp_up_ms4425,
-    //     tornado_sensors_msp_storage.diff_pressure_side,
-    //     tornado_sensors_msp_storage.temp_side_ms4425
-    // );
-    // msgLength = mavlink_msg_to_send_buffer(mavBuffer, &mavMsg);
-    // mavlinkSerialWrite(mavBuffer,msgLength);
+    temp_mavlink_tornado_sensors_t tornado_sensors_msp_storage = get_tornado_sensors_msp_storage();
+    DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,69);
+    uint16_t msgLength;
+    mavlink_msg_tornado_sensors_pack(0, 200, &mavMsg,
+        tornado_sensors_msp_storage.time_msec,
+        tornado_sensors_msp_storage.humidity,
+        tornado_sensors_msp_storage.temp_sht30,
+        tornado_sensors_msp_storage.static_pressure,
+        tornado_sensors_msp_storage.temp_lps,
+        tornado_sensors_msp_storage.temp_ds18b20,
+        tornado_sensors_msp_storage.diff_pressure_forward,
+        tornado_sensors_msp_storage.temp_forward_ms4425,
+        tornado_sensors_msp_storage.diff_pressure_up,
+        tornado_sensors_msp_storage.temp_up_ms4425,
+        tornado_sensors_msp_storage.diff_pressure_side,
+        tornado_sensors_msp_storage.temp_side_ms4425
+    );
+    msgLength = mavlink_msg_to_send_buffer(mavBuffer, &mavMsg);
+    mavlinkSerialWrite(mavBuffer,msgLength);
 }
 
 void processMAVLinkTelemetry(void)

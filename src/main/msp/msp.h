@@ -59,16 +59,16 @@ typedef int mspDescriptor_t;
 typedef struct _temp_mavlink_tornado_sensors_t
 {
  uint32_t time_msec; /*<  Timestamp (UNIX Epoch time or time since system boot). The receiving end can infer timestamp format (since 1.1.1970 or since system boot) by checking for the magnitude of the number.*/
- uint32_t static_pressure; /*<  Static Pressure*/
- uint32_t diff_pressure_forward; /*<  Diff Pressure Forward*/
- uint32_t diff_pressure_up; /*<  Diff Pressure Up*/
- uint32_t diff_pressure_side; /*<  Diff Pressure Side*/
  uint16_t humidity; /*<  Humidity*/
  uint16_t temp_sht30; /*<  SHT30 Temp*/
+ uint32_t static_pressure; /*<  Static Pressure*/
  uint16_t temp_lps; /*<  LPS Temp*/
  uint16_t temp_ds18b20; /*<  DS18B20 Temp*/
+ uint32_t diff_pressure_forward; /*<  Diff Pressure Forward*/
  uint16_t temp_forward_ms4425; /*<  MS4425 Forward Temp*/
+ uint32_t diff_pressure_up; /*<  Diff Pressure Up*/
  uint16_t temp_up_ms4425; /*<  MS4425 Up Temp*/
+ uint32_t diff_pressure_side; /*<  Diff Pressure Side*/
  uint16_t temp_side_ms4425; /*<  MS4425 Side Temp*/
 } temp_mavlink_tornado_sensors_t;
 
