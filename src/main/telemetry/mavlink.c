@@ -405,6 +405,7 @@ void mavlinkSendAttitude(void)
 void mavlinkSendTornado(void)
 {
     uint16_t msgLength;
+    DEBUG_SET(DEBUG_CUSTOM_SENSORS, 0, 69);
     mavlink_msg_tornado_sensors_pack(0, 200, &mavMsg,
         tornado_sensors.timeMs,
         tornado_sensors.humidity,
@@ -540,9 +541,9 @@ void processMAVLinkTelemetry(void)
         mavlinkSendSystemStatus();
     }
 
-    // if (mavlinkStreamTrigger(MAV_DATA_STREAM_RC_CHANNELS)) {
-    //     mavlinkSendRCChannelsAndRSSI();
-    // }
+    if (mavlinkStreamTrigger(MAV_DATA_STREAM_RC_CHANNELS)) {
+        mavlinkSendRCChannelsAndRSSI();
+    }
 
 #ifdef USE_GPS
     if (mavlinkStreamTrigger(MAV_DATA_STREAM_POSITION)) {

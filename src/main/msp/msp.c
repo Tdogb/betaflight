@@ -3468,6 +3468,7 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
         break;
 #endif
     case MSP_SET_TORNADO_SENSORS:
+        DEBUG_SET(DEBUG_CUSTOM_SENSORS, 1, 86);
         tornado_sensors.timeMs = sbufReadU32(src);
         tornado_sensors.humidity = sbufReadU16(src);
         tornado_sensors.t_sht = sbufReadU16(src);
