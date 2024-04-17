@@ -56,6 +56,23 @@ typedef struct mspPacket_s {
 
 typedef int mspDescriptor_t;
 
+typedef struct tornadoSensors_s {
+    uint32_t timeMs;
+    uint16_t humidity;
+    uint16_t t_sht;
+    uint32_t pressure;
+    uint16_t t_lps;
+    uint16_t t_dallas;
+    uint32_t diff_p_forward;
+    uint16_t t_diff_p_forward;
+    uint32_t diff_p_up;
+    uint16_t t_diff_p_up;
+    uint32_t diff_p_side;
+    uint16_t t_diff_p_dide;
+} tornadoSensors_t;
+
+extern tornadoSensors_t tornado_sensors;
+
 struct serialPort_s;
 typedef void (*mspPostProcessFnPtr)(struct serialPort_s *port); // msp post process function, used for gracefully handling reboots, etc.
 typedef mspResult_e (*mspProcessCommandFnPtr)(mspDescriptor_t srcDesc, mspPacket_t *cmd, mspPacket_t *reply, mspPostProcessFnPtr *mspPostProcessFn);

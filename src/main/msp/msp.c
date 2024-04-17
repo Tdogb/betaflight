@@ -214,6 +214,8 @@ static bool vtxTableNeedsInit = false;
 
 static int mspDescriptor = 0;
 
+tornadoSensors_t tornado_sensors;
+
 mspDescriptor_t mspDescriptorAlloc(void)
 {
     return (mspDescriptor_t)mspDescriptor++;
@@ -2660,24 +2662,42 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 
     case MSP_SET_CUSTOM_SENSORS:
         {
-            uint32_t timeMs = sbufReadU32(src);
-            uint16_t humidity_sht45 = sbufReadU32(src);
-            uint16_t temp_sht45 = sbufReadU32(src);
-            uint32_t pressure_lps = sbufReadU32(src);
-            uint16_t temp_lps = sbufReadU16(src);
-            uint16_t temp_ds18b20 = sbufReadU16(src);
-            uint32_t differential_pressure_forward = sbufReadU32(src);
-            uint16_t forward_die_temp = sbufReadU16(src);
-            uint32_t differential_pressure_up = sbufReadU32(src);
-            uint16_t up_die_temp = sbufReadU16(src);
-            uint32_t differential_pressure_side = sbufReadU32(src);
-            uint16_t side_die_temp = sbufReadU16(src);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps);
-            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up);
-            float humidity_sht45_ = -6 + 125 * humidity_sht45 / 65535;
-            static int16_t P_CNT_ = 16383;
+            DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,69);
+            if (sbufBytesRemaining(src) >= 34) {
+                uint32_t timeMs = sbufReadU32(src);
+                uint16_t humidity_sht45 = sbufReadU32(src);
+                uint16_t temp_sht45 = sbufReadU32(src);
+                uint32_t pressure_lps = sbufReadU32(src);
+                uint16_t temp_lps = sbufReadU16(src);
+                uint16_t temp_ds18b20 = sbufReadU16(src);
+                uint32_t differential_pressure_forward = sbufReadU32(src);
+                uint16_t forward_die_temp = sbufReadU16(src);
+                uint32_t differential_pressure_up = sbufReadU32(src);
+                uint16_t up_die_temp = sbufReadU16(src);
+                uint32_t differential_pressure_side = sbufReadU32(src);
+                uint16_t side_die_temp = sbufReadU16(src);
+                UNUSED(timeMs);
+                // UNUSED(humidity_sht45);
+                UNUSED(temp_sht45);
+                // UNUSED(pressure_lps);
+                UNUSED(temp_lps);
+                UNUSED(differential_pressure_up);
+                UNUSED(up_die_temp);
+                UNUSED(differential_pressure_forward);
+                UNUSED(forward_die_temp);
+                UNUSED(differential_pressure_side);
+                UNUSED(side_die_temp);
+                UNUSED(temp_ds18b20);
+                DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,69);
+                DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,humidity_sht45);
+                DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,pressure_lps);
+                DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,temp_lps);
+            } else {
+                DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,68);
+            }
+            // DEBUG_SET(DEBUG_CUSTOM_SENSORS,3,differential_pressure_up);
+            // float humidity_sht45_ = -6 + 125 * humidity_sht45 / 65535;
+            // static int16_t P_CNT_ = 16383;
             // static int16_t T_CNT_ = 2047;
             // static float T_MAX_ = 150;
             // static float T_MIN_ = -50;
@@ -2698,20 +2718,10 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             // float differential_pressure_up_psi = ((differential_pressure_up) - c_ * P_CNT_) * ((p_max_ - p_min_) / (d_ * P_CNT_)) + p_min_;
             // float differential_pressure_up_Pa = differential_pressure_up_psi * 0.45359237f * 9.80665f / 0.0254f / 0.0254f;
             // float up_die_temp_ = (up_die_temp) * (T_MAX_ - T_MIN_) / T_CNT_ + T_MIN_;
-            UNUSED(humidity_sht45);
-            UNUSED(temp_sht45);
-            UNUSED(pressure_lps);
-            UNUSED(temp_lps);
-            UNUSED(differential_pressure_up);
-            UNUSED(up_die_temp);
-            UNUSED(differential_pressure_forward);
-            UNUSED(forward_die_temp);
-            UNUSED(differential_pressure_side);
-            UNUSED(side_die_temp);
+
             // UNUSED(differential_pressure_up_Pa);
             // UNUSED(temp_lps_);
             // UNUSED(pressure_lps_);
-            UNUSED(humidity_sht45_);
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,0,humidity_sht45_);
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,1,pressure_lps_);
             // DEBUG_SET(DEBUG_CUSTOM_SENSORS,2,temp_lps_);
@@ -4403,4 +4413,16 @@ void mspFcProcessReply(mspPacket_t *reply)
 void mspInit(void)
 {
     initActiveBoxIds();
+    tornado_sensors.timeMs = 1;
+    tornado_sensors.humidity = 2;
+    tornado_sensors.t_sht = 3;
+    tornado_sensors.pressure = 4;
+    tornado_sensors.t_lps = 5;
+    tornado_sensors.t_dallas = 6;
+    tornado_sensors.diff_p_forward = 7;
+    tornado_sensors.t_diff_p_forward = 8;
+    tornado_sensors.diff_p_up = 9;
+    tornado_sensors.t_diff_p_up = 10;
+    tornado_sensors.diff_p_side = 11;
+    tornado_sensors.t_diff_p_dide = 12;
 }
