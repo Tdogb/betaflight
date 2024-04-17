@@ -71,6 +71,7 @@
 
 #include "telemetry/telemetry.h"
 #include "telemetry/mavlink.h"
+#include "msp/msp.h"
 
 // mavlink library uses unnames unions that's causes GCC to complain if -Wpedantic is used
 // until this is resolved in mavlink library - ignore -Wpedantic for mavlink code
@@ -94,10 +95,11 @@ static portSharing_e mavlinkPortSharing;
 /* MAVLink datastream rates in Hz */
 static const uint8_t mavRates[] = {
     [MAV_DATA_STREAM_EXTENDED_STATUS] = 2, //2Hz
-    [MAV_DATA_STREAM_RC_CHANNELS] = 5, //5Hz
+    [MAV_DATA_STREAM_RC_CHANNELS] = 1, //5Hz
     [MAV_DATA_STREAM_POSITION] = 2, //2Hz
-    [MAV_DATA_STREAM_EXTRA1] = 10, //10Hz
-    [MAV_DATA_STREAM_EXTRA2] = 10 //2Hz
+    [MAV_DATA_STREAM_EXTRA1] = 2, //10Hz
+    [MAV_DATA_STREAM_EXTRA2] = 2, //2Hz
+    [MAV_DATA_STREAM_TORNADO] = 5
 };
 
 #define MAXSTREAMS ARRAYLEN(mavRates)
@@ -400,6 +402,27 @@ void mavlinkSendAttitude(void)
     mavlinkSerialWrite(mavBuffer, msgLength);
 }
 
+void mavlinkSendTornado(void)
+{
+    uint16_t msgLength;
+    mavlink_msg_tornado_sensors_pack(0, 200, &mavMsg,
+        tornado_sensors.timeMs,
+        tornado_sensors.humidity,
+        tornado_sensors.t_sht,
+        tornado_sensors.pressure,
+        tornado_sensors.t_lps,
+        tornado_sensors.t_dallas,
+        tornado_sensors.diff_p_forward,
+        tornado_sensors.t_diff_p_forward,
+        tornado_sensors.diff_p_up,
+        tornado_sensors.t_diff_p_up,
+        tornado_sensors.diff_p_side,
+        tornado_sensors.t_diff_p_dide
+    );
+    msgLength = mavlink_msg_to_send_buffer(mavBuffer, &mavMsg);
+    mavlinkSerialWrite(mavBuffer, msgLength);
+}
+
 void mavlinkSendHUDAndHeartbeat(void)
 {
     uint16_t msgLength;
@@ -517,9 +540,9 @@ void processMAVLinkTelemetry(void)
         mavlinkSendSystemStatus();
     }
 
-    if (mavlinkStreamTrigger(MAV_DATA_STREAM_RC_CHANNELS)) {
-        mavlinkSendRCChannelsAndRSSI();
-    }
+    // if (mavlinkStreamTrigger(MAV_DATA_STREAM_RC_CHANNELS)) {
+    //     mavlinkSendRCChannelsAndRSSI();
+    // }
 
 #ifdef USE_GPS
     if (mavlinkStreamTrigger(MAV_DATA_STREAM_POSITION)) {
@@ -533,6 +556,10 @@ void processMAVLinkTelemetry(void)
 
     if (mavlinkStreamTrigger(MAV_DATA_STREAM_EXTRA2)) {
         mavlinkSendHUDAndHeartbeat();
+    }
+
+    if (mavlinkStreamTrigger(MAV_DATA_STREAM_TORNADO)) {
+        mavlinkSendTornado();
     }
 }
 

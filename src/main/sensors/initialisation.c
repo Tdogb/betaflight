@@ -45,7 +45,7 @@
 #include "sensors/initialisation.h"
 #include "sensors/rangefinder.h"
 #include "sensors/sensors.h"
-
+#include "msp/msp.h"
 
 // requestedSensors is not actually used
 uint8_t requestedSensors[SENSOR_INDEX_COUNT] = { GYRO_NONE, ACC_NONE, BARO_NONE, MAG_NONE, RANGEFINDER_NONE };

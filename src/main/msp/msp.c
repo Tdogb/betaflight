@@ -148,6 +148,7 @@
 
 #include "telemetry/msp_shared.h"
 #include "telemetry/telemetry.h"
+#include "telemetry/mavlink.h"
 
 #ifdef USE_HARDWARE_REVISION_DETECTION
 #include "hardware_revision.h"
@@ -155,6 +156,7 @@
 
 #include "msp.h"
 
+tornadoSensors_t tornado_sensors;
 
 static const char * const flightControllerIdentifier = FC_FIRMWARE_IDENTIFIER; // 4 UPPER CASE alpha numeric characters that identify the flight controller.
 
@@ -3465,7 +3467,20 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
         }
         break;
 #endif
-
+    case MSP_SET_TORNADO_SENSORS:
+        tornado_sensors.timeMs = sbufReadU32(src);
+        tornado_sensors.humidity = sbufReadU16(src);
+        tornado_sensors.t_sht = sbufReadU16(src);
+        tornado_sensors.pressure = sbufReadU32(src);
+        tornado_sensors.t_lps = sbufReadU16(src);
+        tornado_sensors.t_dallas = sbufReadU16(src);
+        tornado_sensors.diff_p_forward = sbufReadU32(src);
+        tornado_sensors.t_diff_p_forward = sbufReadU16(src);
+        tornado_sensors.diff_p_up = sbufReadU32(src);
+        tornado_sensors.t_diff_p_up = sbufReadU16(src);
+        tornado_sensors.diff_p_side = sbufReadU32(src);
+        tornado_sensors.t_diff_p_dide = sbufReadU16(src);
+        break;
     case MSP2_SET_MOTOR_OUTPUT_REORDERING:
         {
             const uint8_t arraySize = sbufReadU8(src);
@@ -4301,4 +4316,16 @@ void mspFcProcessReply(mspPacket_t *reply)
 void mspInit(void)
 {
     initActiveBoxIds();
+    tornado_sensors.timeMs = 1;
+    tornado_sensors.humidity = 2;
+    tornado_sensors.t_sht = 3;
+    tornado_sensors.pressure = 4;
+    tornado_sensors.t_lps = 5;
+    tornado_sensors.t_dallas = 6;
+    tornado_sensors.diff_p_forward = 7;
+    tornado_sensors.t_diff_p_forward = 8;
+    tornado_sensors.diff_p_up = 9;
+    tornado_sensors.t_diff_p_up = 10;
+    tornado_sensors.diff_p_side = 11;
+    tornado_sensors.t_diff_p_dide = 12;
 }
