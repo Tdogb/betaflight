@@ -1771,7 +1771,7 @@ case MSP_NAME:
         sbufWriteU16(dst, blackboxGetPRatio());
         sbufWriteU8(dst, blackboxConfig()->sample_rate);
         // Added in MSP API 1.45
-        sbufWriteU32(dst, blackboxConfig()->fields_disabled_mask);
+        sbufWriteU32(dst, blackboxGetLogNumber());
 #else
         sbufWriteU8(dst, 0); // Blackbox not supported
         sbufWriteU8(dst, 0);
