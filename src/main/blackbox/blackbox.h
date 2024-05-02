@@ -43,7 +43,11 @@ typedef enum BlackboxSampleRate { // Sample rate is 1/(2^BlackboxSampleRate)
     BLACKBOX_RATE_HALF,
     BLACKBOX_RATE_QUARTER,
     BLACKBOX_RATE_8TH,
-    BLACKBOX_RATE_16TH
+    BLACKBOX_RATE_16TH,
+    BLACKBOX_RATE_32ND,
+    BLACKBOX_RATE_64TH,
+    BLACKBOX_RATE_128TH,
+    BLACKBOX_RATE_256TH,
 } BlackboxSampleRate_e;
 
 typedef enum FlightLogEvent {

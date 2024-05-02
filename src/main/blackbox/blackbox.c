@@ -96,7 +96,7 @@ PG_REGISTER_WITH_RESET_TEMPLATE(blackboxConfig_t, blackboxConfig, PG_BLACKBOX_CO
 
 PG_RESET_TEMPLATE(blackboxConfig_t, blackboxConfig,
     .fields_disabled_mask = 0, // default log all fields
-    .sample_rate = BLACKBOX_RATE_QUARTER,
+    .sample_rate = BLACKBOX_RATE_256TH,
     .device = DEFAULT_BLACKBOX_DEVICE,
     .mode = BLACKBOX_MODE_NORMAL,
     .high_resolution = false
