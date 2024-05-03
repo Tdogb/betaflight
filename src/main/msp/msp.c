@@ -1348,7 +1348,7 @@ case MSP_NAME:
 #if defined(USE_RANGEFINDER)
         sbufWriteU32(dst, rangefinderGetLatestAltitude());
 #else
-        sbufWriteU32(dst, 0);
+        sbufWriteU32(dst, millis());
 #endif
         break;
 
