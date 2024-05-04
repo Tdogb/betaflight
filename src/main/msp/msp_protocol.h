@@ -324,7 +324,7 @@
 #define MSP_SET_GPS_RESCUE_PIDS  226    //in message          GPS Rescue throttleP and velocity PIDS + yaw P
 #define MSP_SET_VTXTABLE_BAND    227    //in message          set vtxTable band/channel data (one band at a time)
 #define MSP_SET_VTXTABLE_POWERLEVEL 228 //in message          set vtxTable powerLevel data (one powerLevel at a time)
-#define MSP_GET_CUSTOM_SENSORS 230
+#define MSP_GET_CUSTOM_SENSORS 231
 // #define MSP_BIND                 240    //in message          no param
 // #define MSP_ALARMS               242
 
