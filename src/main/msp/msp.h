@@ -54,6 +54,36 @@ typedef struct mspPacket_s {
     uint8_t direction;  // It also looks like unused and might be deleted.
 } mspPacket_t;
 
+typedef struct torndoPacket_s {
+    uint32_t timeMs;
+    uint16_t humidity;
+    uint16_t temp_SHT;
+    uint32_t pressure_lps;
+    uint16_t temp_lps;
+    uint16_t temp_ds18b20;
+    uint32_t differential_pressure_forward;
+    uint16_t forward_die_temp;
+    uint32_t differential_pressure_up; 
+    uint16_t up_die_temp;
+    uint32_t differential_pressure_side;
+    uint16_t side_die_temp;
+} tornadoPacket_t;
+
+typedef struct tornadoFormattedValues_s {
+    uint32_t timeMs;
+    float humidity;
+    float temp_SHT;
+    float pressure_lps;
+    float temp_lps;
+    float temp_ds18b20;
+    float differential_pressure_forward;
+    float forward_die_temp;
+    float differential_pressure_up; 
+    float up_die_temp;
+    float differential_pressure_side;
+    float side_die_temp;
+} tornadoFormattedValues_t;
+
 typedef int mspDescriptor_t;
 
 struct serialPort_s;
@@ -67,3 +97,9 @@ mspResult_e mspFcProcessCommand(mspDescriptor_t srcDesc, mspPacket_t *cmd, mspPa
 void mspFcProcessReply(mspPacket_t *reply);
 
 mspDescriptor_t mspDescriptorAlloc(void);
+
+// tornadoPacket_t* getTornadoPacketPtr(void);
+// tornadoFormattedValues_t* getTornadoFormattedValuesPtr(void);
+
+extern tornadoPacket_t tornadoPacket;
+extern tornadoFormattedValues_t tornadoFormattedValues;

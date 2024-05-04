@@ -167,6 +167,7 @@
 #include "sensors/barometer.h"
 #include "sensors/battery.h"
 #include "sensors/sensors.h"
+#include "msp/msp.h"
 
 #ifdef USE_GPS_PLUS_CODES
 // located in lib/main/google/olc
@@ -804,6 +805,37 @@ static void osdElementCoreTemperature(osdElementParms_t *element)
     tfp_sprintf(element->buff, "C%c%3d%c", SYM_TEMPERATURE, osdConvertTemperatureToSelectedUnit(getCoreTemperatureCelsius()), osdGetTemperatureSymbolForSelectedUnit());
 }
 #endif // USE_ADC_INTERNAL
+
+static void osdElementTornadoSensors(osdElementParms_t *element)
+{
+    int x = element->elemPosX;
+    int y = element->elemPosY;
+    //Make sure none of the char arrays overflow!
+    char humidityStr[3];
+    tfp_sprintf(humidityStr, "%3u", (uint8_t)tornadoFormattedValues.humidity);
+    osdDisplayWrite(element, x, y, DISPLAYPORT_SEVERITY_NORMAL, humidityStr);
+    
+    char pressureStr[4];
+    tfp_sprintf(pressureStr, "%4u", (uint16_t)tornadoFormattedValues.pressure_lps);
+    osdDisplayWrite(element, x, y+1, DISPLAYPORT_SEVERITY_NORMAL, pressureStr);
+
+    char tempds18b20Str[5];
+    int tempDS_whole_number = (uint8_t)tornadoFormattedValues.temp_ds18b20;
+    int tempDS_decimal = (uint16_t)((tornadoFormattedValues.temp_ds18b20 - tempDS_whole_number) * 100);
+    tfp_sprintf(tempds18b20Str, "%3u.%2u", tempDS_whole_number, tempDS_decimal);
+    osdDisplayWrite(element, x, y+2, DISPLAYPORT_SEVERITY_NORMAL, tempds18b20Str);
+
+    char airspeedForwardStr[8];
+    tfp_sprintf(airspeedForwardStr, "%8u", tornadoPacket.differential_pressure_forward);
+    osdDisplayWrite(element, x, y+3, DISPLAYPORT_SEVERITY_NORMAL, airspeedForwardStr);
+
+    char tempDiffPresForwardStr[5];
+    int tempDiffPresForward_whole_number = (uint8_t)tornadoFormattedValues.forward_die_temp;
+    int tempDiffPresForward_decimal = (uint16_t)((tornadoFormattedValues.forward_die_temp - tempDiffPresForward_whole_number) * 100);
+    tfp_sprintf(tempDiffPresForwardStr, "%3u.%2u", tempDiffPresForward_whole_number,tempDiffPresForward_decimal);
+    osdDisplayWrite(element, x, y+4, DISPLAYPORT_SEVERITY_NORMAL, tempDiffPresForwardStr);
+
+}
 
 static void osdBackgroundCameraFrame(osdElementParms_t *element)
 {
@@ -1805,6 +1837,7 @@ static const uint8_t osdElementDisplayOrder[] = {
     OSD_DISARMED,
     OSD_NUMERICAL_HEADING,
     OSD_READY_MODE,
+    OSD_TORNADO,
 #ifdef USE_VARIO
     OSD_NUMERICAL_VARIO,
 #endif
@@ -2008,6 +2041,7 @@ const osdElementDrawFn osdElementDrawFunction[OSD_ITEM_COUNT] = {
     [OSD_SYS_VTX_TEMP]            = osdElementSys,
     [OSD_SYS_FAN_SPEED]           = osdElementSys,
 #endif
+    [OSD_TORNADO]                 = osdElementTornadoSensors,
 };
 
 // Define the mapping between the OSD element id and the function to draw its background (static part)
@@ -2037,7 +2071,7 @@ static void osdAddActiveElement(osd_items_e element)
 void osdAddActiveElements(void)
 {
     activeOsdElementCount = 0;
-
+    osdAddActiveElement(OSD_TORNADO);
 #ifdef USE_ACC
     if (sensors(SENSOR_ACC)) {
         osdAddActiveElement(OSD_ARTIFICIAL_HORIZON);

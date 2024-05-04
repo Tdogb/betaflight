@@ -215,6 +215,16 @@ static bool vtxTableNeedsInit = false;
 
 static int mspDescriptor = 0;
 
+tornadoPacket_t tornadoPacket;
+tornadoFormattedValues_t tornadoFormattedValues;
+
+// tornadoPacket_t* getTornadoPacketPtr(void) {
+//     return &tornadoPacket;
+// }
+// tornadoFormattedValues_t* getTornadoFormattedValuesPtr(void) {
+//     return &tornadoFormattedValues;
+// }
+
 mspDescriptor_t mspDescriptorAlloc(void)
 {
     return (mspDescriptor_t)mspDescriptor++;
@@ -3347,7 +3357,55 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
         }
         break;
 #endif
+    case MSP_GET_CUSTOM_SENSORS:
+        {
+            tornadoPacket.timeMs = sbufReadU32(src);
+            tornadoPacket.humidity = sbufReadU16(src);
+            tornadoPacket.temp_SHT = sbufReadU16(src);
+            tornadoPacket.pressure_lps = sbufReadU32(src);
+            tornadoPacket.temp_lps = sbufReadU16(src);
+            tornadoPacket.temp_ds18b20 = sbufReadU16(src);
+            tornadoPacket.differential_pressure_forward = sbufReadU32(src);
+            tornadoPacket.forward_die_temp = sbufReadU16(src);
+            tornadoPacket.differential_pressure_up = sbufReadU32(src);
+            tornadoPacket.up_die_temp = sbufReadU16(src);
+            tornadoPacket.differential_pressure_side = sbufReadU32(src);
+            tornadoPacket.side_die_temp = sbufReadU16(src);
 
+            tornadoFormattedValues.timeMs = tornadoPacket.timeMs;
+            uint32_t shum = (625 * tornadoPacket.humidity) >> 12;
+            tornadoFormattedValues.humidity = (float)shum / 100.0f;
+
+            uint32_t stemp = ((4375 * tornadoPacket.temp_SHT) >> 14) - 4500;
+            tornadoFormattedValues.temp_SHT = (float)stemp / 100.0f;
+
+            uint32_t spres = tornadoPacket.pressure_lps;
+            if (spres & 0x800000) {
+                spres = (0xff000000 | spres);
+            }
+            tornadoFormattedValues.pressure_lps = (float)spres / 4096.0f;
+
+            tornadoFormattedValues.temp_lps = (float)tornadoPacket.temp_lps / 4096.0f;
+
+            tornadoFormattedValues.temp_ds18b20 = (float)tornadoPacket.temp_ds18b20 / 100.0f;
+
+            // float p_max_, p_min_;
+            // float c_, d_;
+            // static int16_t P_CNT_ = 16383;
+            static int16_t T_CNT_ = 2047;
+            static float T_MAX_ = 150;
+            static float T_MIN_ = -50;
+            // tornadoFormattedValues.differential_pressure_forward = ((float)tornadoPacket.differential_pressure_forward - c_ * P_CNT_) * ((p_max_ - p_min_) / (d_ * P_CNT_)) + p_min_;
+            tornadoFormattedValues.differential_pressure_forward = tornadoPacket.differential_pressure_forward;
+            tornadoFormattedValues.forward_die_temp = (float)tornadoPacket.forward_die_temp * (T_MAX_ - T_MIN_) / T_CNT_ + T_MIN_;
+            
+            tornadoFormattedValues.differential_pressure_up = tornadoPacket.differential_pressure_up;
+            tornadoFormattedValues.up_die_temp = tornadoPacket.up_die_temp;
+
+            tornadoFormattedValues.differential_pressure_side = tornadoPacket.differential_pressure_side;
+            tornadoFormattedValues.side_die_temp = tornadoPacket.side_die_temp;
+            break;
+        }
 #ifdef USE_VTX_COMMON
     case MSP_SET_VTX_CONFIG:
         {
@@ -4413,4 +4471,16 @@ void mspFcProcessReply(mspPacket_t *reply)
 void mspInit(void)
 {
     initActiveBoxIds();
+    tornadoPacket.timeMs = millis();
+    tornadoPacket.humidity = 1;
+    tornadoPacket.temp_SHT = 2;
+    tornadoPacket.pressure_lps = 3;
+    tornadoPacket.temp_lps = 4;
+    tornadoPacket.temp_ds18b20 = 5;
+    tornadoPacket.differential_pressure_forward = 6;
+    tornadoPacket.forward_die_temp = 7;
+    tornadoPacket.differential_pressure_up = 8;
+    tornadoPacket.up_die_temp = 9;
+    tornadoPacket.differential_pressure_side = 10;
+    tornadoPacket.side_die_temp = 11;
 }
