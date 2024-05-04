@@ -231,7 +231,7 @@ static const char * const lookupTableBlackboxMode[] = {
 };
 
 static const char * const lookupTableBlackboxSampleRate[] = {
-    "1/1", "1/2", "1/4", "1/8", "1/16"
+    "1/1", "1/2", "1/4", "1/8", "1/16", "1/32", "1/64", "1/128", "1/256"
 };
 #endif
 
