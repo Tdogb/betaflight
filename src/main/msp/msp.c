@@ -3404,6 +3404,15 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 
             tornadoFormattedValues.differential_pressure_side = tornadoPacket.differential_pressure_side;
             tornadoFormattedValues.side_die_temp = tornadoPacket.side_die_temp;
+
+            DEBUG_SET(DEBUG_TORNADO, 0, (int16_t)(tornadoFormattedValues.humidity * 100));
+            DEBUG_SET(DEBUG_TORNADO, 1, (int16_t)(tornadoFormattedValues.temp_SHT * 100));
+            DEBUG_SET(DEBUG_TORNADO, 2, (int16_t)(tornadoFormattedValues.pressure_lps * 10));
+            DEBUG_SET(DEBUG_TORNADO, 3, (int16_t)(tornadoFormattedValues.temp_lps * 100));
+            DEBUG_SET(DEBUG_TORNADO, 4, (int16_t)(tornadoFormattedValues.temp_ds18b20 * 100));
+            DEBUG_SET(DEBUG_TORNADO, 5, (int16_t)(tornadoPacket.differential_pressure_forward));
+            DEBUG_SET(DEBUG_TORNADO, 6, (int16_t)(tornadoFormattedValues.forward_die_temp * 100));
+            DEBUG_SET(DEBUG_TORNADO, 7, (int16_t)(tornadoPacket.differential_pressure_up));
             break;
         }
 #ifdef USE_VTX_COMMON
