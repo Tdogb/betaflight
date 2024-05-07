@@ -3418,6 +3418,35 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
             }
             break;
         }
+
+        case MSP_SET_WP:
+            {
+                uint8_t waypoint_number = sbufReadU8(src); //Waypoint action
+                sbufReadU8(src); //Action
+                uint32_t home_lat_temp_u = sbufReadU32(src);
+                uint32_t home_lon_temp_u = sbufReadU32(src);
+                uint32_t home_alt_temp_u = sbufReadU32(src);
+                int32_t home_lat_temp = *(int32_t*)&home_lat_temp_u;
+                int32_t home_lon_temp = *(int32_t*)&home_lon_temp_u;
+                UNUSED(home_alt_temp_u);
+                // int32_t home_alt_temp = *(int32_t*)&home_alt_temp_u;
+                sbufReadU16(src); //P1
+                sbufReadU16(src); //P2 unused
+                sbufReadU16(src); //P3 unused
+                sbufReadU8(src); //Flag
+
+                // Constrain to only be in the united states in case there is an issue with reading the packet there won't be a flyaway
+                if (waypoint_number == 0 && home_lat_temp <= 51*10000000 && home_lon_temp >= -129*10000000 && home_lat_temp >= 20*10000000 && home_lon_temp <= -69*10000000) {
+                    GPS_home[GPS_LATITUDE] = home_lat_temp;
+                    GPS_home[GPS_LONGITUDE] = home_lon_temp;
+                }
+                DEBUG_SET(DEBUG_SET_HOME, 0, home_lat_temp);
+                DEBUG_SET(DEBUG_SET_HOME, 1, home_lon_temp);
+                DEBUG_SET(DEBUG_SET_HOME, 2, home_lat_temp_u);
+                DEBUG_SET(DEBUG_SET_HOME, 3, home_lon_temp_u);
+                DEBUG_SET(DEBUG_SET_HOME, 4, 69);
+                break;
+            }
 #ifdef USE_VTX_COMMON
     case MSP_SET_VTX_CONFIG:
         {
