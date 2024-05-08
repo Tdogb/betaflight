@@ -816,8 +816,8 @@ static void osdElementTornadoSensors(osdElementParms_t *element)
     osdDisplayWrite(element, x, y, DISPLAYPORT_SEVERITY_NORMAL, humidityStr);
     
     char tempSHTStr[5];
-    int tempSHT_whole_number = (uint8_t)tornadoFormattedValues.temp_ds18b20;
-    int tempSHT_decimal = (uint16_t)((tornadoFormattedValues.temp_ds18b20 - tempSHT_whole_number) * 100);
+    int tempSHT_whole_number = (uint8_t)tornadoFormattedValues.temp_SHT;
+    int tempSHT_decimal = (uint16_t)((tornadoFormattedValues.temp_SHT - tempSHT_whole_number) * 100);
     tfp_sprintf(tempSHTStr, "%3u.%2u%c", tempSHT_whole_number, tempSHT_decimal, SYM_TEMPERATURE);
     osdDisplayWrite(element, x, y+1, DISPLAYPORT_SEVERITY_NORMAL, tempSHTStr);
 
@@ -825,7 +825,7 @@ static void osdElementTornadoSensors(osdElementParms_t *element)
     tfp_sprintf(pressureStr, "%4u PSI", (uint16_t)tornadoFormattedValues.pressure_lps);
     osdDisplayWrite(element, x, y+2, DISPLAYPORT_SEVERITY_NORMAL, pressureStr);
 
-    char tempds18b20Str[5];
+    char tempds18b20Str[5+1];
     int tempDS_whole_number = (uint8_t)tornadoFormattedValues.temp_ds18b20;
     int tempDS_decimal = (uint16_t)((tornadoFormattedValues.temp_ds18b20 - tempDS_whole_number) * 100);
     tfp_sprintf(tempds18b20Str, "%3u.%2u%c", tempDS_whole_number, tempDS_decimal, SYM_TEMPERATURE);
@@ -835,7 +835,7 @@ static void osdElementTornadoSensors(osdElementParms_t *element)
     tfp_sprintf(airspeedForwardStr, "%8u", tornadoPacket.differential_pressure_forward);
     osdDisplayWrite(element, x, y+4, DISPLAYPORT_SEVERITY_NORMAL, airspeedForwardStr);
 
-    char tempDiffPresForwardStr[5];
+    char tempDiffPresForwardStr[5+1];
     int tempDiffPresForward_whole_number = (uint8_t)tornadoFormattedValues.forward_die_temp;
     int tempDiffPresForward_decimal = (uint16_t)((tornadoFormattedValues.forward_die_temp - tempDiffPresForward_whole_number) * 100);
     tfp_sprintf(tempDiffPresForwardStr, "%3u.%2u%c", tempDiffPresForward_whole_number,tempDiffPresForward_decimal, SYM_TEMPERATURE);
