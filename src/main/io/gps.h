@@ -252,6 +252,9 @@ typedef struct gpsSolutionData_s {
     uint8_t numSat;
     uint32_t time;                  // GPS msToW
     uint32_t navIntervalMs;         // interval between nav solutions in ms
+    int32_t vel_n;
+    int32_t vel_e;
+    int32_t vel_d;
 } gpsSolutionData_t;
 
 /*

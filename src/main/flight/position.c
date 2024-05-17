@@ -157,8 +157,8 @@ void calculateEstimatedAltitude(void)
 
         if (haveGpsAlt) { // update relativeAltitude with every new gpsAlt value, or hold the previous value until 3D lock recovers
             if (!useZeroedGpsAltitude && haveBaroAlt) { // armed without zero offset, can use baro values to zero later
-                gpsAltOffsetCm = gpsAltCm - baroAltCm; // not very accurate
-                useZeroedGpsAltitude = true;
+                gpsAltOffsetCm = 0; //gpsAltCm - baroAltCm; // not very accurate
+                useZeroedGpsAltitude = false;
             }
             if (useZeroedGpsAltitude) { // normal situation
                 zeroedAltitudeCm = gpsAltCm - gpsAltOffsetCm; // now that we have a GPS offset value, we can use it to zero relativeAltitude
@@ -187,9 +187,10 @@ void calculateEstimatedAltitude(void)
     zeroedAltitudeCm = pt2FilterApply(&altitudeLpf, zeroedAltitudeCm);
     // NOTE: this filter must receive 0 as its input, for the whole disarmed time, to ensure correct zeroed values on arming
 
-    if (wasArmed) {
-        displayAltitudeCm = zeroedAltitudeCm; // while armed, show filtered relative altitude in OSD / sensors tab
-    }
+    // if (wasArmed) {
+    //     displayAltitudeCm = zeroedAltitudeCm; // while armed, show filtered relative altitude in OSD / sensors tab
+    // }
+    displayAltitudeCm = gpsAltCm;
 
     // *** calculate Vario signal
     static float previousZeroedAltitudeCm = 0.0f;

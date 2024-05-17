@@ -3359,7 +3359,6 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 #endif
     case MSP_GET_CUSTOM_SENSORS:
         {
-            DEBUG_SET(DEBUG_TORNADO, 0, (int16_t)(tornadoFormattedValues.humidity * 69));
             if (sbufBytesRemaining(src) >= 34) { //4+2+2+4+2+2+4+2+4+2+4+2 = 34
                 tornadoPacket.timeMs = sbufReadU32(src);
                 tornadoPacket.humidity = sbufReadU16(src);
@@ -3391,30 +3390,34 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
 
                 tornadoFormattedValues.temp_ds18b20 = (float)tornadoPacket.temp_ds18b20 / 100.0f;
 
+
+                // tornadoFormattedValues.differential_pressure_forward = (float)tornadoPacket.differential_pressure_forward * 1e-5;
+                tornadoFormattedValues.differential_pressure_forward = (float)tornadoPacket.differential_pressure_forward;
+                tornadoFormattedValues.forward_die_temp = (float)tornadoPacket.forward_die_temp / 100;
                 // float p_max_, p_min_;
                 // float c_, d_;
                 // static int16_t P_CNT_ = 16383;
-                static int16_t T_CNT_ = 2047;
-                static float T_MAX_ = 150;
-                static float T_MIN_ = -50;
+                // static int16_t T_CNT_ = 2047;
+                // static float T_MAX_ = 150;
+                // static float T_MIN_ = -50;
                 // tornadoFormattedValues.differential_pressure_forward = ((float)tornadoPacket.differential_pressure_forward - c_ * P_CNT_) * ((p_max_ - p_min_) / (d_ * P_CNT_)) + p_min_;
-                tornadoFormattedValues.differential_pressure_forward = tornadoPacket.differential_pressure_forward;
-                tornadoFormattedValues.forward_die_temp = (float)tornadoPacket.forward_die_temp * (T_MAX_ - T_MIN_) / T_CNT_ + T_MIN_;
+                // tornadoFormattedValues.differential_pressure_forward = tornadoPacket.differential_pressure_forward;
+                // tornadoFormattedValues.forward_die_temp = (float)tornadoPacket.forward_die_temp * (T_MAX_ - T_MIN_) / T_CNT_ + T_MIN_;
                 
-                tornadoFormattedValues.differential_pressure_up = tornadoPacket.differential_pressure_up;
-                tornadoFormattedValues.up_die_temp = tornadoPacket.up_die_temp;
+                // tornadoFormattedValues.differential_pressure_up = tornadoPacket.differential_pressure_up;
+                // tornadoFormattedValues.up_die_temp = tornadoPacket.up_die_temp;
 
-                tornadoFormattedValues.differential_pressure_side = tornadoPacket.differential_pressure_side;
-                tornadoFormattedValues.side_die_temp = tornadoPacket.side_die_temp;
+                // tornadoFormattedValues.differential_pressure_side = tornadoPacket.differential_pressure_side;
+                // tornadoFormattedValues.side_die_temp = tornadoPacket.side_die_temp;
 
                 DEBUG_SET(DEBUG_TORNADO, 0, (int16_t)(tornadoFormattedValues.humidity * 100));
                 DEBUG_SET(DEBUG_TORNADO, 1, (int16_t)(tornadoFormattedValues.temp_SHT * 100));
                 DEBUG_SET(DEBUG_TORNADO, 2, (int16_t)(tornadoFormattedValues.pressure_lps * 10));
                 DEBUG_SET(DEBUG_TORNADO, 3, (int16_t)(tornadoFormattedValues.temp_lps * 100));
                 DEBUG_SET(DEBUG_TORNADO, 4, (int16_t)(tornadoFormattedValues.temp_ds18b20 * 100));
-                DEBUG_SET(DEBUG_TORNADO, 5, (int16_t)(tornadoPacket.differential_pressure_forward));
+                DEBUG_SET(DEBUG_TORNADO, 5, (int16_t)(tornadoFormattedValues.differential_pressure_forward));
                 DEBUG_SET(DEBUG_TORNADO, 6, (int16_t)(tornadoFormattedValues.forward_die_temp * 100));
-                DEBUG_SET(DEBUG_TORNADO, 7, (int16_t)(tornadoPacket.differential_pressure_up));
+                DEBUG_SET(DEBUG_TORNADO, 7, (int16_t)(tornadoFormattedValues.differential_pressure_up));
             }
             break;
         }

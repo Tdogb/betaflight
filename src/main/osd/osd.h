@@ -356,6 +356,8 @@ typedef struct osdConfig_s {
 #ifdef USE_SPEC_PREARM_SCREEN
     uint8_t osd_show_spec_prearm;
 #endif // USE_SPEC_PREARM_SCREEN
+    uint16_t tornado_aspd_offset;
+    uint16_t tornado_aspd_scale;
 } osdConfig_t;
 
 PG_DECLARE(osdConfig_t, osdConfig);

@@ -1115,6 +1115,9 @@ static void writeGPSFrame(timeUs_t currentTimeUs)
     blackboxWriteUnsignedVB(gpsSol.groundSpeed);
     blackboxWriteUnsignedVB(gpsSol.groundCourse);
     blackboxWriteUnsignedVB(gpsSol.speed3d);
+    blackboxWriteSignedVB(gpsSol.vel_n);
+    blackboxWriteSignedVB(gpsSol.vel_e);
+    blackboxWriteSignedVB(gpsSol.vel_d);
 
     gpsHistory.GPS_numSat = gpsSol.numSat;
     gpsHistory.GPS_coord[GPS_LATITUDE] = gpsSol.llh.lat;
