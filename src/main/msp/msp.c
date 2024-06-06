@@ -3380,6 +3380,8 @@ static mspResult_e mspProcessInCommand(mspDescriptor_t srcDesc, int16_t cmdMSP, 
                 uint32_t stemp = ((4375 * tornadoPacket.temp_SHT) >> 14) - 4500;
                 tornadoFormattedValues.temp_SHT = (float)stemp / 100.0f;
 
+                tornadoFormattedValues.dewpoint = tornadoFormattedValues.temp_SHT - ((100-tornadoFormattedValues.humidity)/5);
+
                 uint32_t spres = tornadoPacket.pressure_lps;
                 if (spres & 0x800000) {
                     spres = (0xff000000 | spres);

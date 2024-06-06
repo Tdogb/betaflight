@@ -82,6 +82,7 @@ typedef struct tornadoFormattedValues_s {
     float up_die_temp;
     float differential_pressure_side;
     float side_die_temp;
+    float dewpoint;
 } tornadoFormattedValues_t;
 
 typedef int mspDescriptor_t;

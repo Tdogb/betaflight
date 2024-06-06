@@ -815,53 +815,65 @@ static void osdElementTornadoSensors(osdElementParms_t *element)
     tfp_sprintf(humidityStr, "%3u RH", (uint8_t)tornadoFormattedValues.humidity);
     osdDisplayWrite(element, x, y, DISPLAYPORT_SEVERITY_NORMAL, humidityStr);
     
+    char dewStr[4+5+2];
+    int dew_whole_number = (uint16_t)tornadoFormattedValues.dewpoint;
+    int dew_decimal = (uint16_t)((tornadoFormattedValues.dewpoint - dew_whole_number) * 100);
+    tfp_sprintf(dewStr, "%3u.%02u%c DEW", dew_whole_number, dew_decimal, SYM_TEMPERATURE);
+    osdDisplayWrite(element, x, y+1, DISPLAYPORT_SEVERITY_NORMAL, dewStr);
+    
     char tempSHTStr[7];
     int tempSHT_whole_number = (uint8_t)tornadoFormattedValues.temp_SHT;
     int tempSHT_decimal = (uint16_t)((tornadoFormattedValues.temp_SHT - tempSHT_whole_number) * 100);
-    tfp_sprintf(tempSHTStr, "%3u.%2u%c", tempSHT_whole_number, tempSHT_decimal, SYM_TEMPERATURE);
-    osdDisplayWrite(element, x, y+1, DISPLAYPORT_SEVERITY_NORMAL, tempSHTStr);
+    tfp_sprintf(tempSHTStr, "%3u.%02u%c", tempSHT_whole_number, tempSHT_decimal, SYM_TEMPERATURE);
+    osdDisplayWrite(element, x, y+2, DISPLAYPORT_SEVERITY_NORMAL, tempSHTStr);
 
     char pressureStr[7+5];
     int pressurewhole_number = (uint16_t)tornadoFormattedValues.pressure_lps;
     int pressuredecimal = (uint16_t)((tornadoFormattedValues.pressure_lps - pressurewhole_number) * 1000);
-    tfp_sprintf(pressureStr, "%4u.%3u HPA", pressurewhole_number, pressuredecimal);
-    osdDisplayWrite(element, x, y+2, DISPLAYPORT_SEVERITY_NORMAL, pressureStr);
+    tfp_sprintf(pressureStr, "%4u.%03u HPA", pressurewhole_number, pressuredecimal);
+    osdDisplayWrite(element, x, y+3, DISPLAYPORT_SEVERITY_NORMAL, pressureStr);
 
     char tempds18b20Str[5+2];
     int tempDS_whole_number = (uint16_t)tornadoFormattedValues.temp_ds18b20;
     int tempDS_decimal = (uint16_t)((tornadoFormattedValues.temp_ds18b20 - tempDS_whole_number) * 100);
-    tfp_sprintf(tempds18b20Str, "%3u.%2u%c", tempDS_whole_number, tempDS_decimal, SYM_TEMPERATURE);
-    osdDisplayWrite(element, x, y+3, DISPLAYPORT_SEVERITY_NORMAL, tempds18b20Str);
+    tfp_sprintf(tempds18b20Str, "%3u.%02u%c", tempDS_whole_number, tempDS_decimal, SYM_TEMPERATURE);
+    osdDisplayWrite(element, x, y+4, DISPLAYPORT_SEVERITY_NORMAL, tempds18b20Str);
 
     char airspeedForwardStr[6+5];
     tfp_sprintf(airspeedForwardStr, "%u DPSI", tornadoPacket.differential_pressure_forward); // * (osdConfig()->tornado_aspd_scale / 100.0f) + (osdConfig()->tornado_aspd_offset / 100.0f)
-    osdDisplayWrite(element, x, y+4, DISPLAYPORT_SEVERITY_NORMAL, airspeedForwardStr);
+    osdDisplayWrite(element, x, y+5, DISPLAYPORT_SEVERITY_NORMAL, airspeedForwardStr);
+
+    char speed3dStr[8];
+    tfp_sprintf(speed3dStr, "%5u 3D", gpsSol.speed3d);
+    osdDisplayWrite(element, x, y+6, DISPLAYPORT_SEVERITY_NORMAL, speed3dStr);
 
     char tempDiffPresForwardStr[5+2];
     int tempDiffPresForward_whole_number = (uint8_t)tornadoFormattedValues.forward_die_temp;
     int tempDiffPresForward_decimal = (uint16_t)((tornadoFormattedValues.forward_die_temp - tempDiffPresForward_whole_number) * 100);
-    tfp_sprintf(tempDiffPresForwardStr, "%3u.%2u%c", tempDiffPresForward_whole_number,tempDiffPresForward_decimal, SYM_TEMPERATURE);
-    osdDisplayWrite(element, x, y+5, DISPLAYPORT_SEVERITY_NORMAL, tempDiffPresForwardStr);
+    tfp_sprintf(tempDiffPresForwardStr, "%3u.%02u%c", tempDiffPresForward_whole_number,tempDiffPresForward_decimal, SYM_TEMPERATURE);
+    osdDisplayWrite(element, x, y+7, DISPLAYPORT_SEVERITY_NORMAL, tempDiffPresForwardStr);
+
+
 
     // char speed2dStr[9];
     // tfp_sprintf(speed2dStr, "%3u.%2u 2D", gpsSol.groundSpeed/10, (uint16_t)((gpsSol.groundSpeed/10.0)*100));
     // osdDisplayWrite(element, x, y+6, DISPLAYPORT_SEVERITY_NORMAL, speed2dStr);
 
-    // char speed3dStr[9];
-    // tfp_sprintf(speed3dStr, "%3u.%2u 3D", gpsSol.speed3d/10, (uint16_t)((gpsSol.speed3d/10.0)*100));
-    // osdDisplayWrite(element, x, y+7, DISPLAYPORT_SEVERITY_NORMAL, speed3dStr);
+    char GPSvelNStr[5+6];
+    tfp_sprintf(GPSvelNStr, "%5d VEL N", (gpsSol.vel_n));
+    osdDisplayWrite(element, x, y+8, DISPLAYPORT_SEVERITY_NORMAL, GPSvelNStr);
 
-    char GPSvelNStr[6+6];
-    tfp_sprintf(GPSvelNStr, "%4d.%1u VEL N", (gpsSol.vel_n/10), (uint16_t)(ABS(gpsSol.vel_n / 10.0)*100));
-    osdDisplayWrite(element, x, y+6, DISPLAYPORT_SEVERITY_NORMAL, GPSvelNStr);
+    char GPSvelEStr[5+6];
+    tfp_sprintf(GPSvelEStr, "%5d VEL E", (gpsSol.vel_e));
+    osdDisplayWrite(element, x, y+9, DISPLAYPORT_SEVERITY_NORMAL, GPSvelEStr);
 
-    char GPSvelEStr[6+6];
-    tfp_sprintf(GPSvelEStr, "%4d.%1u VEL E", (gpsSol.vel_e/10), (uint16_t)(ABS(gpsSol.vel_e / 10.0)*100));
-    osdDisplayWrite(element, x, y+7, DISPLAYPORT_SEVERITY_NORMAL, GPSvelEStr);
+    char GPSvelDStr[5+6];
+    tfp_sprintf(GPSvelDStr, "%5d VEL D", (gpsSol.vel_d));
+    osdDisplayWrite(element, x, y+10, DISPLAYPORT_SEVERITY_NORMAL, GPSvelDStr);
 
-    char GPSvelDStr[6+6];
-    tfp_sprintf(GPSvelDStr, "%4d.%1u VEL D", (gpsSol.vel_d/10), (uint16_t)(ABS(gpsSol.vel_d / 10.0)*100));
-    osdDisplayWrite(element, x, y+8, DISPLAYPORT_SEVERITY_NORMAL, GPSvelDStr);
+    char headingstr[9];
+    tfp_sprintf(headingstr, "%5u DEG", gpsSol.groundCourse);
+    osdDisplayWrite(element, x, y+11, DISPLAYPORT_SEVERITY_NORMAL, headingstr);
 }
 
 static void osdBackgroundCameraFrame(osdElementParms_t *element)

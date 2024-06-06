@@ -280,7 +280,10 @@ static const blackboxConditionalFieldDefinition_t blackboxGpsGFields[] = {
     {"GPS_altitude",      -1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB),   CONDITION(ALWAYS)},
     {"GPS_speed",         -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)},
     {"GPS_ground_course", -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)},
-    {"GPS_3d_speed",      -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)}
+    {"GPS_3d_speed",      -1, UNSIGNED, PREDICT(0),          ENCODING(UNSIGNED_VB), CONDITION(ALWAYS)},
+    {"GPS_vel_n",         -1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB), CONDITION(ALWAYS)},
+    {"GPS_vel_e",         -1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB), CONDITION(ALWAYS)},
+    {"GPS_vel_d",         -1, SIGNED,   PREDICT(0),          ENCODING(SIGNED_VB), CONDITION(ALWAYS)}
 };
 
 // GPS home frame
