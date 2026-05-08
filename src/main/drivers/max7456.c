@@ -73,7 +73,7 @@
 #define VIDEO_MODE_IS_PAL(val)      (((val) & VIDEO_MODE_MASK) == VIDEO_MODE_PAL)
 #define VIDEO_MODE_IS_NTSC(val)     (((val) & VIDEO_MODE_MASK) == VIDEO_MODE_NTSC)
 
-#define VIDEO_SIGNAL_DEBOUNCE_MS    100 // Time to wait for input to stabilize
+#define VIDEO_SIGNAL_DEBOUNCE_MS    10000 // Time to wait for input to stabilize
 
 // VM1 bits
 
@@ -283,30 +283,31 @@ static void max7456ClearLayer(displayPortLayer_e layer)
 
 static void max7456ReInit(void)
 {
-    uint8_t srdata = 0;
+    // uint8_t srdata = 0;
 
-    switch (videoSignalCfg) {
-    case VIDEO_SYSTEM_PAL:
-        videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
-        break;
+    // switch (videoSignalCfg) {
+    // case VIDEO_SYSTEM_PAL:
+    //     videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+    //     break;
 
-    case VIDEO_SYSTEM_NTSC:
-        videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
-        break;
+    // case VIDEO_SYSTEM_NTSC:
+    //     videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+    //     break;
 
-    case VIDEO_SYSTEM_AUTO:
-        srdata = spiReadRegMsk(dev, MAX7456ADD_STAT);
+    // case VIDEO_SYSTEM_AUTO:
+    //     srdata = spiReadRegMsk(dev, MAX7456ADD_STAT);
 
-        if (VIN_IS_NTSC(srdata)) {
-            videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
-        } else if (VIN_IS_PAL(srdata)) {
-            videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
-        } else {
-            // No valid input signal, fallback to default (PAL)
-            videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
-        }
-        break;
-    }
+    //     if (VIN_IS_NTSC(srdata)) {
+    //         videoSignalReg = VIDEO_MODE_NTSC | OSD_ENABLE;
+    //     } else if (VIN_IS_PAL(srdata)) {
+    //         videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+    //     } else {
+    //         // No valid input signal, fallback to default (PAL)
+    //         videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE;
+    //     }
+    //     break;
+    // }
+    videoSignalReg = VIDEO_MODE_PAL | OSD_ENABLE | SYNC_MODE_AUTO;
 
     if (videoSignalReg & VIDEO_MODE_PAL) { //PAL
         maxScreenSize = VIDEO_BUFFER_CHARS_PAL;
@@ -555,9 +556,6 @@ bool max7456BuffersSynced(void)
 
 bool max7456ReInitIfRequired(bool forceStallCheck)
 {
-    static timeMs_t lastSigCheckMs = 0;
-    static timeMs_t videoDetectTimeMs = 0;
-    static uint16_t reInitCount = 0;
     static timeMs_t lastStallCheckMs = MAX7456_STALL_CHECK_INTERVAL_MS / 2; // offset so that it doesn't coincide with the signal check
 
     const timeMs_t nowMs = millis();
@@ -574,39 +572,10 @@ bool max7456ReInitIfRequired(bool forceStallCheck)
 
     if (stalled) {
         max7456ReInit();
-    } else if ((videoSignalCfg == VIDEO_SYSTEM_AUTO)
-              && ((nowMs - lastSigCheckMs) > MAX7456_SIGNAL_CHECK_INTERVAL_MS)) {
-
-        // Write 0xff to conclude any current SPI transaction the MAX7456 is expecting
-        spiWrite(dev, END_STRING);
-
-        // Adjust output format based on the current input format.
-
-        const uint8_t videoSense = spiReadRegMsk(dev, MAX7456ADD_STAT);
-
-        DEBUG_SET(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_MODEREG, videoSignalReg & VIDEO_MODE_MASK);
-        DEBUG_SET(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_SENSE, videoSense & 0x7);
-        DEBUG_SET(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_ROWS, max7456GetRowsCount());
-
-        if (videoSense & STAT_LOS) {
-            videoDetectTimeMs = 0;
-        } else {
-            if ((VIN_IS_PAL(videoSense) && VIDEO_MODE_IS_NTSC(videoSignalReg))
-              || (VIN_IS_NTSC_alt(videoSense) && VIDEO_MODE_IS_PAL(videoSignalReg))) {
-                if (videoDetectTimeMs) {
-                    if (millis() - videoDetectTimeMs > VIDEO_SIGNAL_DEBOUNCE_MS) {
-                        max7456ReInit();
-                        DEBUG_SET(DEBUG_MAX7456_SIGNAL, DEBUG_MAX7456_SIGNAL_REINIT, ++reInitCount);
-                    }
-                } else {
-                    // Wait for signal to stabilize
-                    videoDetectTimeMs = millis();
-                }
-            }
-        }
-
-        lastSigCheckMs = nowMs;
-    }
+    } 
+    // --- GROUND STATION HACK ---
+    // Polling logic deleted. The FC will no longer reset the MAX7456 
+    // when it sees static on the video line.
 
     return stalled;
 }
